@@ -15,8 +15,8 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 | Phase | Title | Status |
 |---|---|---|
 | Phase 1 | Repository Bootstrap | ✅ Complete |
-| Phase 2 | Architecture Baseline | 🔄 Active |
-| Phase 3 | Knowledge Baseline | Pending |
+| Phase 2 | Architecture Baseline | ✅ Complete |
+| Phase 3 | Knowledge Baseline | 🔄 Active |
 | Phase 4 | Runtime and Workflow Baseline | Pending |
 | Phase 5 | Human-in-the-Loop Assistance | Pending |
 | Phase 6 | Delivery Integration | Pending |
@@ -55,7 +55,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 2 — Architecture Baseline 🔄 Active
+### Phase 2 — Architecture Baseline ✅ Complete
 
 **Objective:** Produce a complete, stable architecture baseline that is sufficient to govern near-term implementation decisions.
 
@@ -79,7 +79,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 3 — Knowledge Baseline
+### Phase 3 — Knowledge Baseline 🔄 Active
 
 **Objective:** Establish the knowledge platform with ingestion, storage, retrieval, and lifecycle governance.
 
