@@ -44,7 +44,7 @@ def _ensure_required_fields(
     """Return metadata dict with all required fields populated."""
     today = date.today().isoformat()
     meta.setdefault("id", asset_id)
-    meta.setdefault("title", title)
+    meta["title"] = title  # Always use the caller-resolved title (argument > front-matter > filename)
     meta.setdefault("status", "draft")
     meta.setdefault("created", today)
     meta["updated"] = today

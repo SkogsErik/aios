@@ -78,23 +78,27 @@ AI-generated content is **always derived** at creation time. Promotion to canoni
 
 ## Provenance metadata
 
-Every knowledge asset carries the following provenance metadata:
+Every knowledge asset carries the following provenance metadata. Field names match the implemented metadata schema defined in ADR-003 and `platform/knowledge/schema/asset-metadata-schema.yaml`.
 
 | Field | Description | Required |
 |---|---|---|
-| `id` | Unique identifier (DOC-NNN or domain-specific) | Yes |
+| `id` | Unique knowledge asset identifier (`KA-NNN`) | Yes |
 | `title` | Human-readable title | Yes |
-| `status` | draft \| active \| review \| deprecated \| archived | Yes |
-| `canonical` | Boolean — canonical or derived | Yes |
-| `created_at` | ISO 8601 timestamp | Yes |
-| `created_by` | Operator ID or system component ID | Yes |
-| `version` | Semantic version or hash | Yes |
-| `source` | Origin — URL, file path, operator input, model output | Yes |
-| `reviewed_by` | If canonical: operator ID who reviewed | If canonical |
-| `reviewed_at` | If canonical: review timestamp | If canonical |
-| `derived_from` | If derived: list of source asset IDs | If derived |
-| `tags` | Domain and category tags | Recommended |
-| `sensitivity` | low \| medium \| high | Recommended |
+| `status` | `draft` \| `active` \| `review` \| `deprecated` \| `archived` | Yes |
+| `created` | ISO 8601 date on which the asset was created (`YYYY-MM-DD`) | Yes |
+| `updated` | ISO 8601 date of the last update (`YYYY-MM-DD`) | Yes |
+| `author` | Operator ID or system component ID that created the asset | Yes |
+| `origin` | Source: `manual`, workflow ID, or ingestion pipeline ID | Yes |
+| `version` | Integer version counter; starts at 1, incremented on each update | Yes |
+| `provenance.source_uri` | Original source URI if ingested from an external source | Yes |
+| `provenance.ingested_via` | Ingestion pipeline identifier if produced by a pipeline | Yes |
+| `tags` | Free-form tags for categorisation and filtering | Yes |
+| `related` | IDs of related knowledge assets (`KA-NNN`) | Yes |
+| `canonical` | Boolean — `true` for canonical assets, `false` for derived | Recommended |
+| `reviewed_by` | Operator ID who reviewed this asset (required for canonical active assets) | If canonical |
+| `reviewed_at` | Date of the review that transitioned the asset to `active` | If canonical |
+| `derived_from` | For derived assets: list of source asset IDs | If derived |
+| `sensitivity` | `low` \| `medium` \| `high` | Recommended |
 | `retention_policy` | Retention period or rule | Recommended |
 
 ---

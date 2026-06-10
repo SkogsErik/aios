@@ -12,7 +12,7 @@ Defined by: ADR-003 — Knowledge Persistence Approach
 import hashlib
 import shutil
 import tarfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -21,9 +21,16 @@ from index_manager import STORE_DIR
 DEFAULT_BACKUP_DIR = Path(__file__).parent.parent / "backups"
 
 
-def _archive_name() -> str:
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    return f"knowledge-store-{timestamp}.tar.gz"
+def _archive_name(dest_dir: Path) -> str:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    base = f"knowledge-store-{timestamp}"
+    name = f"{base}.tar.gz"
+    # Avoid overwriting an existing archive if two backups happen in the same second
+    counter = 1
+    while (dest_dir / name).exists():
+        name = f"{base}-{counter}.tar.gz"
+        counter += 1
+    return name
 
 
 def _checksum(path: Path) -> str:
@@ -44,7 +51,7 @@ def backup(dest_dir: Optional[Path] = None) -> Path:
     dest_dir = Path(dest_dir) if dest_dir else DEFAULT_BACKUP_DIR
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    archive_path = dest_dir / _archive_name()
+    archive_path = dest_dir / _archive_name(dest_dir)
 
     with tarfile.open(archive_path, "w:gz") as tar:
         tar.add(STORE_DIR, arcname="store")
