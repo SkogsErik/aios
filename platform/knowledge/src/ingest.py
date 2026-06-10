@@ -9,7 +9,7 @@ Capability: CAP-001 (Knowledge Management)
 Defined by: ADR-003 — Knowledge Persistence Approach
 """
 
-import shutil
+import re
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -17,7 +17,7 @@ from typing import Optional
 import frontmatter
 import yaml
 
-from index_manager import ASSETS_DIR, _domain_for, add_or_update_entry, next_asset_id
+from index_manager import ASSETS_DIR, _domain_for, add_or_update_entry, find_by_id, next_asset_id
 
 REQUIRED_FIELDS = [
     "id", "title", "status", "created", "updated",
@@ -27,7 +27,6 @@ REQUIRED_FIELDS = [
 
 def _slugify(text: str) -> str:
     """Return a safe, lowercase filename slug from a title string."""
-    import re
     slug = text.lower()
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
@@ -120,7 +119,6 @@ def ingest_file(
 
     # If the asset already exists at a different path, remove the old file
     if existing_id:
-        from index_manager import find_by_id
         old_path = find_by_id(existing_id)
         if old_path and old_path != dest_path:
             old_path.unlink(missing_ok=True)

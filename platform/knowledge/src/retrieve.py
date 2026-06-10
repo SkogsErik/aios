@@ -91,10 +91,6 @@ def search(query: str, max_results: int = 50) -> list[dict]:
     return [e for _, e in scored[:max_results]]
 
 
-def get_full_asset(asset_id: str) -> Optional[dict]:
-    """Return the full asset (metadata + content) for a given ID."""
-    return get_by_id(asset_id)
-
 
 # --- helpers ---
 
@@ -119,8 +115,13 @@ def _searchable_text(metadata: dict, content: str) -> str:
 
 
 def _get_tags_from_entry(entry: dict) -> list[str]:
-    """Get tags for an entry, loading from file if necessary."""
-    # The index does not store tags, so we load the file for tag filtering.
+    """
+    Return the tags for an index entry by loading the asset file.
+
+    The index does not cache tags, so the asset file is read directly.
+    Returns an empty list if the file path is missing, the file cannot
+    be read, or the asset has no tags field.
+    """
     path_str = entry.get("path", "")
     if not path_str:
         return []
