@@ -51,6 +51,13 @@ Downward traceability: higher-level artefacts list their known children.
 | Habit | `HBT` | `HBT-001` | `HBT-NNN` |
 | Relationship | `REL` | `REL-001` | `REL-NNN` |
 | Reflection | `RFL` | `RFL-001` | `RFL-NNN` |
+| Project | `PRJ` | `PRJ-001` | `PRJ-NNN` |
+| Commitment | `CMT` | `CMT-001` | `CMT-NNN` |
+| Focus Area | `FCA` | `FCA-001` | `FCA-NNN` |
+| Responsibility | `RSP` | `RSP-001` | `RSP-NNN` |
+| Opportunity | `OPP` | `OPP-001` | `OPP-NNN` |
+| Risk | `RSK` | `RSK-001` | `RSK-NNN` |
+| Constraint | `CON` | `CON-001` | `CON-NNN` |
 
 `NNN` is a zero-padded three-digit integer. IDs are assigned sequentially within each prefix. IDs are never reused.
 
@@ -118,6 +125,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-014 | `platform/workflow-runtime/README.md` |
 | DOC-015 | `workflows/README.md` |
 | DOC-016 | `architecture/identity-centric-pivot-analysis.md` |
+| DOC-017 | `architecture/executive-cognition-analysis.md` |
 
 ### Architecture Decision Records
 
