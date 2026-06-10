@@ -201,6 +201,81 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
+### CAP-011 — Identity and Persona Management
+
+**Purpose:** Maintain the persistent representation of the operator, including declared facts, preferences, values, and the canonical/derived split for persona attributes.
+
+**Primary layer:** Layer 4 — Knowledge Platform; Layer 2 — Identity, Security, and Policy
+
+**Capabilities:**
+- Create, update, and version the Persona (PRS) entity
+- Manage declared facts (values, beliefs, preferences, habits, constraints)
+- Manage inferred attributes (AI-detected patterns, awaiting operator review)
+- Promote inferred attributes to declared facts only after operator approval
+- Export and delete all persona data
+- Provide persona context to all layers above Layer 2
+
+**Dependencies:** CAP-001 (Knowledge Management), CAP-007 (Security/Policy)
+
+---
+
+### CAP-012 — Observation and Capture
+
+**Purpose:** Capture, deduplicate, store, and retain observations from automatic, manual, and scheduled sources. Observations are the raw material for all executive reasoning and reflection.
+
+**Primary layer:** Layer 4 — Knowledge Platform; Layer 6 — Workflow and Agent Runtime
+
+**Capabilities:**
+- Capture observations from automatic sources (workflow execution, gateway calls, calendar, git, filesystem)
+- Capture observations from low-friction manual input (CLI, hotkey, terminal hook)
+- Capture observations from scheduled prompts (end-of-day, end-of-week)
+- Deduplicate observations at capture time using content + context hash
+- Enforce retention policy (90-day granular, compressed thereafter)
+- Tag observations with project, goal, decision, and commitment context
+
+**Dependencies:** CAP-001 (Knowledge Management), CAP-004 (Workflow Orchestration), CAP-011 (Identity and Persona Management)
+
+---
+
+### CAP-013 — Executive Function
+
+**Purpose:** Provide continuous attention management, deterministic priority computation, and proactive alerting through the rules engine and attention manager.
+
+**Primary layer:** Layer 6 — Workflow and Agent Runtime (executive daemon)
+
+**Capabilities:**
+- Track attention state (active/dormant/forgotten/resurfaced) for all tracked items
+- Compute attention decay and trigger state transitions
+- Detect stalls (projects without recent attention) and generate alerts
+- Score deadline proximity and rank commitments by urgency
+- Detect attention fragmentation (excessive active or dormant items)
+- Traverse the dependency graph and notify on unblocking events
+- Produce deterministic priority rankings (urgency × commitment_weight × momentum)
+- Generate attention budget recommendations (suggested focus allocation)
+
+**Dependencies:** CAP-011 (Identity and Persona Management), CAP-012 (Observation and Capture), CAP-004 (Workflow Orchestration)
+
+---
+
+### CAP-014 — Reflection and Learning
+
+**Purpose:** Synthesize observations into insights across daily, weekly, monthly, and quarterly cycles. Generate decisions, update the persona, and refine priorities through structured reflection.
+
+**Primary layer:** Layer 6 — Workflow and Agent Runtime (reflection engine); Layer 4 — Knowledge Platform
+
+**Capabilities:**
+- Execute daily reflection: reconstruct day, compare planned vs actual, project tomorrow's focus
+- Execute weekly reflection: detect patterns, assess momentum, analyse energy, identify tensions
+- Execute monthly reflection: strategic alignment, resource allocation, abandonment analysis
+- Execute quarterly reflection: outcome analysis, decision audit, value check, learning extraction
+- Generate decisions from reflection outputs (focus, abandon, reprioritize, change)
+- Update Persona attributes from confirmed reflection insights
+- Update priority rankings based on reflection outcomes
+
+**Dependencies:** CAP-011, CAP-012, CAP-013, CAP-003 (AI and Model Management)
+
+---
+
 ## Capability-to-layer mapping
 
 | Capability | Primary Layer |

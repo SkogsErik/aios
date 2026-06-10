@@ -1,11 +1,11 @@
 # 0004 — Identity Model
 
 **ID:** ADR-004  
-**Status:** Accepted  
+**Status:** Superseded  
 **Date:** 2026-06-10  
 **Affects:** CAP-007, THEME-001  
 **Supersedes:** N/A  
-**Superseded by:** N/A
+**Superseded by:** ADR-007
 
 ---
 

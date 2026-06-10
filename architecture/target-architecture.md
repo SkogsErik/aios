@@ -20,15 +20,18 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 ├─────────────────────────────────────────────┤
 │  7. Delivery and Automation Platform        │
 ├─────────────────────────────────────────────┤
-│  6. Workflow and Agent Runtime              │
+│  6b. Executive Daemon     │  6a. Workflow   │
+│  (continuous)             │  Executor (disc)│
 ├─────────────────────────────────────────────┤
 │  5. Architecture and Governance Repository  │
 ├─────────────────────────────────────────────┤
-│  4. Knowledge Platform                      │
+│  4. Knowledge Platform (incl. Persona,      │
+│     Observation, Project stores)            │
 ├─────────────────────────────────────────────┤
 │  3. Model Gateway                           │
 ├─────────────────────────────────────────────┤
 │  2. Identity, Security, and Policy          │
+│     (incl. Persona management)              │
 ├─────────────────────────────────────────────┤
 │  1. Platform Foundations                    │
 └─────────────────────────────────────────────┘
@@ -66,19 +69,23 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 
 **Responsibilities:**
 - Operator identity and authentication
-- Service identity for platform components
+- Service identity for platform components (per ADR-004)
+- **Persona (PRS) management**: the persistent representation of the operator — declared facts, preferences, values, beliefs, habits, constraints, relationships (per ADR-007)
+- **Canonical/derived split**: operator-declared persona attributes are canonical; AI-inferred attributes are derived and require operator review before promotion
 - Access control policies (least-privilege by default)
 - Policy evaluation at component boundaries
 - Security event logging and alerting
 - Certificate and credential lifecycle
 
 **Non-responsibilities:**
-- Knowledge storage
+- Knowledge storage (except persona and observation stores, which are identity-adjacent)
 - Model calls
 - Workflow execution
 
 **Boundaries:**
 - Every request from Layer 3 and above carries an identity context
+- Persona data is accessible to higher layers only through policy-governed interfaces
+- Derived persona attributes are labelled as such and never mixed with canonical attributes
 - Policy is evaluated at this layer before access to lower-layer resources is granted
 - Security events are forwarded to the observability stack in Layer 1
 
@@ -120,6 +127,9 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 - Separation of canonical from derived knowledge
 - Embedding and semantic indexing of canonical assets (derived)
 - Backup and versioning of the knowledge store
+- **Persona store** (PRS persistence): declared and derived persona attributes, retention, export, deletion (per ADR-007)
+- **Observation store**: automatic, manual, and scheduled observations with 90-day retention and lossy aggregation (per ADR-008)
+- **Project and commitment stores**: lifecycle tracking for projects (PRJ), goals, focus areas, and commitments (per ADR-007 project context)
 
 **Non-responsibilities:**
 - Generating knowledge (that is the responsibility of operators or governed workflows)
@@ -130,6 +140,8 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 - Canonical knowledge is version-controlled and never silently overwritten
 - Derived artefacts are labelled and regenerable
 - All access to this layer is authenticated and policy-governed (Layer 2)
+- Persona data follows the canonical/derived split (Principle 7)
+- Observations are captured by Layer 6 triggers but stored in Layer 4
 
 ---
 
@@ -160,7 +172,9 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 
 ## Layer 6 — Workflow and Agent Runtime
 
-**Purpose:** Provide the governed execution environment for defined, auditable workflows and agent roles.
+**Purpose:** Provide the governed execution environment for discrete, auditable workflows and agent roles (**CLI workflow executor**), and the continuous runtime for attention management, prioritization, and executive reasoning (**executive daemon**). These are two distinct runtimes that coexist via shared stores (per ADR-010).
+
+### Sub-layer 6a — CLI Workflow Executor (governed discrete tasks)
 
 **Responsibilities:**
 - Workflow definition, scheduling, and execution
@@ -173,13 +187,36 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 **Non-responsibilities:**
 - Model inference (delegated to Layer 3)
 - Knowledge persistence (delegated to Layer 4)
-- Delivery pipeline execution (delegated to Layer 7)
+- Continuous executive functions (delegated to Sub-layer 6b)
 
 **Boundaries:**
 - All workflow executions are bounded by a documented capability (Layer 5)
 - Workflows that reach a human approval gate must pause until approval is received
 - No workflow may bypass the model gateway (Layer 3) for model calls
 - Autonomy stage governs which workflow types are permitted to run autonomously
+
+### Sub-layer 6b — Executive Daemon (continuous executive function)
+
+**Responsibilities:**
+- Persistent event loop: monitors time triggers, state changes, and external events
+- Attention manager: tracks active/dormant/forgotten/resurfaced states with decay functions
+- Rules engine (Layer 1, deterministic): stall detection, deadline scoring, fragmentation alerts, dependency traversal, unblocking notifications (per ADR-009)
+- Priority computation: deterministic scoring (urgency × commitment_weight × momentum)
+- Reflection engine: schedules and orchestrates daily/weekly/monthly/quarterly reflection cycles
+- Trigger evaluation: evaluates rules engine triggers and produces operator notifications
+- State checkpointing: periodic serialization of attention state, priority rankings, and daemon state
+
+**Non-responsibilities:**
+- Executing governed workflows (delegated to Sub-layer 6a)
+- Making model calls (delegated to Layer 3; AI reasoning in Layer 2 of ADR-009 is optional and scheduled)
+- Modifying persona attributes (all executive inferences are derived; operator approval required for promotion)
+
+**Boundaries:**
+- The executive daemon is optional; the system operates without it at reduced capability (no proactive alerts, no attention management, no reflection scheduling)
+- The daemon does not require AI model availability for any Layer 1 (deterministic) operation
+- Layer 2 (AI reasoning) is scheduled separately and requires model gateway access
+- State is persisted to shared stores in Layer 4; daemon restart restores from last checkpoint
+- All executive daemon outputs are visible to the operator for review and override
 
 ---
 
@@ -234,11 +271,12 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 The following concerns apply across all layers:
 
 | Concern | Layer ownership | Notes |
-|---|---|---|
+|---|---|---|---|
 | Observability | Layer 1 (infrastructure); each layer emits signals | All layers emit structured metrics, traces, and logs |
 | Security | Layer 2 (enforcement); each layer participates | Identity context flows through all layers |
 | Traceability | Layer 5 (definition); applied by all layers | All components reference capability IDs |
 | Backup/restore | Layer 1 (infrastructure); Layers 4 and 5 define policy | Knowledge and governance artefacts are backed up |
+| Executive context | Layer 2 (persona), Layer 4 (stores), Layer 6b (daemon) | Persona, attention, priorities, and decisions form the executive context available to higher layers |
 
 ## Related artifacts
 
@@ -246,3 +284,7 @@ The following concerns apply across all layers:
 - [`architecture/capability-map.md`](capability-map.md) — capabilities mapped to layers
 - [`governance/governance-model.md`](../governance/governance-model.md) — governance framework
 - [`governance/autonomy-maturity-model.md`](../governance/autonomy-maturity-model.md) — autonomy constraints on Layer 6
+- [ADR-007 — Identity as Domain Object](../adr/0007-identity-as-domain-object.md) — Layer 2 persona model update
+- [ADR-008 — Observation Store Architecture](../adr/0008-observation-store-architecture.md) — Layer 4 observation store addition
+- [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — Layer 6b rules engine design
+- [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — Layer 6 two-runtime model

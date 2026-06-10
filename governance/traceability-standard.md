@@ -37,12 +37,13 @@ Downward traceability: higher-level artefacts list their known children.
 | Theme | `THEME` | `THEME-001` | `THEME-NNN` |
 | Capability | `CAP` | `CAP-001` | `CAP-NNN` |
 | Solution | `SOL` | `SOL-001` | `SOL-NNN` |
-| Project | `PROJ` | `PROJ-001` | `PROJ-NNN` |
+| Project (deprecated) | `PROJ` | `PROJ-001` | `PROJ-NNN` |
 | Repository | `REP` | `REP-001` | `REP-NNN` |
 | Architecture Decision Record | `ADR` | `ADR-001` | `ADR-NNN` |
 | Workflow | `WF` | `WF-001` | `WF-NNN` |
 | Document | `DOC` | `DOC-001` | `DOC-NNN` |
 | Persona | `PRS` | `PRS-001` | `PRS-NNN` |
+| Project (universal) | `PRJ` | `PRJ-001` | `PRJ-NNN` |
 | Observation | `OBS` | `OBS-001` | `OBS-NNN` |
 | Goal | `GL` | `GL-001` | `GL-NNN` |
 | Decision | `DEC` | `DEC-001` | `DEC-NNN` |

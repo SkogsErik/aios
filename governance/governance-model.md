@@ -138,15 +138,44 @@ This document defines governance domains, responsibilities, and controls. Detail
 
 ---
 
+## 6. Personal Data Governance
+
+**Purpose:** Govern the collection, storage, retention, access, and lifecycle of personal data in the Persona store, observation store, and derived personal attributes. Personal data is among the most sensitive assets in the system and requires governance commensurate with that sensitivity.
+
+**Responsibilities:**
+- Defining and enforcing retention policies for observations and persona data
+- Classifying personal data as canonical (operator-declared) or derived (AI-inferred), following Principle 7
+- Governing access to persona and observation data by platform components
+- Ensuring export and deletion capability for all personal data
+- Defining the threat model for personal data stores
+- Reviewing AI-inferred persona attributes before they influence the persona
+- Managing the distinction between operator-declared facts and AI-suggested patterns
+
+**Controls:**
+- Personal data follows the canonical/derived split (Principle 7): operator-declared facts are canonical; AI-inferred patterns are derived
+- Derived persona attributes require explicit operator review and approval before promotion to canonical
+- Raw observations are retained for 90 days at full granularity, then compressed to aggregates (per ADR-008)
+- All platform components accessing persona or observation data have scoped service identities (per ADR-004, preserved by ADR-007)
+- Persona and observation data is exportable on demand in a machine-readable format
+- Clean deletion of all personal data is possible and verifiable
+- AI-inferred patterns that could affect operator decisions are surfaced for review before they influence the executive reasoning engine
+
+**Accountable:** Repository operator (human)
+
+**See also:** ADR-007 (Identity as Domain Object), ADR-008 (Observation Store Architecture), Architecture Principle 7 (Canonical vs Derived), [`knowledge/knowledge-architecture.md`](../knowledge/knowledge-architecture.md) (canonical/derived split model)
+
+---
+
 ## Governance review cadence
 
 | Domain | Review trigger |
-|---|---|
+|---|---|---|
 | Architecture | At each roadmap phase transition; on any significant capability change |
 | Knowledge | Quarterly; on any ingestion of a large new corpus |
 | AI/Model | Monthly; on any model or provider change |
 | Autonomy | Before and after each stage transition |
 | Operational | Monthly; after any incident |
+| Personal Data | Quarterly; on any new capture source or store; on any phase transition involving persona or observation data |
 
 ## Related artifacts
 
@@ -155,3 +184,6 @@ This document defines governance domains, responsibilities, and controls. Detail
 - [`knowledge/knowledge-architecture.md`](../knowledge/knowledge-architecture.md)
 - [`architecture/principles.md`](../architecture/principles.md)
 - [`adr/README.md`](../adr/README.md)
+- [ADR-007 — Identity as Domain Object](../adr/0007-identity-as-domain-object.md) — persona data governance scope
+- [ADR-008 — Observation Store Architecture](../adr/0008-observation-store-architecture.md) — observation retention and deduplication
+- [`architecture/executive-cognition-analysis.md`](../architecture/executive-cognition-analysis.md) — DOC-017, personal data governance gap identified in §Gap F

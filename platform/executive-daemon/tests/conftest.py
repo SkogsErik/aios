@@ -1,0 +1,10 @@
+"""
+conftest.py — Shared pytest fixtures for executive daemon tests.
+Patches sys.path so that src/ modules are importable.
+"""
+
+import sys
+from pathlib import Path
+
+SRC_DIR = Path(__file__).resolve().parent.parent / "src"
+sys.path.insert(0, str(SRC_DIR))

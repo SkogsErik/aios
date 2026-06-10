@@ -119,9 +119,13 @@ Numbers are never reused. If an ADR is superseded, the original file is retained
 | [ADR-001](0001-bootstrap-repository-structure.md) | Bootstrap Repository Structure | Accepted |
 | [ADR-002](0002-model-gateway-pattern.md) | Model Gateway Pattern | Accepted |
 | [ADR-003](0003-knowledge-persistence-approach.md) | Knowledge Persistence Approach | Accepted |
-| [ADR-004](0004-identity-model.md) | Identity Model | Accepted |
-| [ADR-005](0005-workflow-engine-technology.md) | Workflow Engine Technology Selection | Accepted |
+| [ADR-004](0004-identity-model.md) | Identity Model | Superseded |
+| [ADR-005](0005-workflow-engine-technology.md) | Workflow Engine Technology Selection | Superseded (partial) |
 | [ADR-006](0006-model-gateway-technology.md) | Model Gateway Technology Selection | Accepted |
+| [ADR-007](0007-identity-as-domain-object.md) | Identity as Domain Object | Accepted |
+| [ADR-008](0008-observation-store-architecture.md) | Observation Store Architecture | Accepted |
+| [ADR-009](0009-executive-reasoning-engine-pattern.md) | Executive Reasoning Engine Pattern | Accepted |
+| [ADR-010](0010-runtime-model-evolution.md) | Runtime Model Evolution | Accepted |
 
 ---
 

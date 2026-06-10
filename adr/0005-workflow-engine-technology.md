@@ -1,11 +1,11 @@
 # 0005 — Workflow Engine Technology Selection
 
 **ID:** ADR-005  
-**Status:** Accepted  
+**Status:** Superseded (partial)  
 **Date:** 2026-06-10  
 **Affects:** CAP-004, THEME-004  
 **Supersedes:** N/A  
-**Superseded by:** N/A
+**Superseded by:** ADR-010 (partial — daemon constraint only)
 
 ---
 

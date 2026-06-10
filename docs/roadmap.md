@@ -17,10 +17,11 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 | Phase 1 | Repository Bootstrap | ✅ Complete |
 | Phase 2 | Architecture Baseline | ✅ Complete |
 | Phase 3 | Knowledge Baseline | ✅ Complete |
-| Phase 4 | Runtime and Workflow Baseline | 🔄 Active |
-| Phase 5 | Human-in-the-Loop Assistance | Pending |
-| Phase 6 | Delivery Integration | Pending |
-| Phase 7 | Controlled Autonomy | Pending |
+| Phase 4 | Runtime and Workflow Baseline | ✅ Complete |
+| Phase 5 | Identity Foundation | 🔄 Active |
+| Phase 6 | Executive Function | Pending |
+| Phase 7 | AI-Assisted Executive Function | Pending |
+| Phase 8 | Governed Autonomy | Pending |
 
 ## Phases
 
@@ -126,69 +127,112 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 5 — Human-in-the-Loop Assistance
+### Phase 5 — Identity Foundation 🔄 Active
 
-**Objective:** Introduce AI-assisted capabilities with explicit human approval gates for all significant actions.
+**Objective:** Establish the persistent identity and observation infrastructure that underpins all executive function capabilities.
 
 **Outcomes:**
-- AI assistance is available for knowledge enrichment, document drafting, and workflow suggestions.
-- All AI-suggested actions require human approval before execution.
-- The system operates at Autonomy Stage 2 (AI Assistant) as defined in the autonomy maturity model.
+- A persistent Persona store exists with declared operator facts, preferences, and values.
+- Observations are captured through automatic, manual, and scheduled mechanisms.
+- Projects, commitments, goals, and focus areas are first-class entities with lifecycles.
+- The naming collision between PROJ (platform delivery) and PRJ (personal project) is resolved.
+- Personal data governance domain is defined, including retention, access, and canonical/derived policies.
 
 **Deliverables:**
-- Human approval interface for AI-suggested actions
-- Observability dashboard for AI actions and approvals
-- Evaluation framework for AI output quality
-- ADR for human-in-the-loop architecture
+- `platform/knowledge/persona/` — Persona store (file-based, ADR-003 pattern)
+- `platform/knowledge/observations/` — Observation store with multi-layer capture (ADR-008)
+- `platform/knowledge/projects/` — Project and commitment stores
+- `platform/knowledge/goals/` — Goal and focus area stores
+- Personal data governance policy (extends DOC-006)
+- ADR-007 (Identity as Domain Object), ADR-008 (Observation Store Architecture)
 
 **Exit criteria:**
-- All AI-suggested actions are captured with full provenance.
-- Human approval rate and override rate are measurable.
-- No autonomous action is taken without explicit approval.
-- Autonomy Stage 2 exit criteria satisfied.
+- Persona store is populated with operator-declared facts.
+- Observations are flowing from at least one automatic capture source.
+- Projects and commitments have defined lifecycles and are queryable.
+- Personal data governance policy is documented and reviewed.
+- ADR-007 and ADR-008 are accepted and referenced in the capability map.
 
 ---
 
-### Phase 6 — Delivery Integration
+### Phase 6 — Executive Function
 
-**Objective:** Integrate AIOS with software delivery workflows, enabling AI-assisted development and automation.
+**Objective:** Deploy the deterministic executive layer — rules engine, attention manager, and executive daemon — providing continuous attention management and prioritization without AI dependency.
 
 **Outcomes:**
-- AIOS can assist with code generation, review, and documentation.
-- Delivery workflows are governed by the same traceability and approval standards as other workflows.
-- Integration with version control and CI/CD is operational.
+- The executive daemon runs continuously, evaluating triggers and managing attention state.
+- The rules engine (Layer 1, deterministic) produces stall alerts, deadline warnings, fragmentation notices, and unblocking notifications.
+- The attention manager tracks active/dormant/forgotten state with decay functions.
+- Projects and commitments drive priority computation through deterministic scoring.
+- All executive function outputs are factual and require no model inference.
 
 **Deliverables:**
-- `platform/delivery/` — delivery integration implementation
-- Delivery workflow definitions
-- ADRs for delivery integration decisions
+- `platform/executive-daemon/` — persistent daemon with event loop (ADR-010)
+- Rules engine: attention decay, stall detection, deadline scoring, fragmentation detection, dependency traversal
+- Attention manager: state transitions, decay model, trigger evaluation
+- Priority computation: deterministic scoring (urgency × commitment_weight × momentum)
+- CLI: `aios start`, `aios stop`, `aios status`, `aios attention` for operator interaction
+- ADR-009 (Executive Reasoning Engine Pattern), ADR-010 (Runtime Model Evolution)
 
 **Exit criteria:**
-- At least one delivery workflow is operational and auditable.
-- All delivery automation is governed and traceable.
-- Autonomy Stage 3 exit criteria satisfied (if applicable).
+- Executive daemon runs for 7 consecutive days without crash or state loss.
+- Rules engine produces correct stall alerts, deadline warnings, and fragmentation notices.
+- Priority ranking is available on demand and reflects current project/commitment state.
+- Attention state survives daemon restart (checkpoint/restore verified).
+- ADR-009 and ADR-010 are accepted and reflected in the target architecture.
 
 ---
 
-### Phase 7 — Controlled Autonomy
+### Phase 7 — AI-Assisted Executive Function
 
-**Objective:** Progress through defined autonomy stages under explicit governance, enabling selected autonomous operations within bounded scope.
+**Objective:** Introduce the AI reasoning layer (Layer 2) on top of the deterministic executive foundation, enabling pattern detection, decision support, preference learning, and multi-cycle reflection.
+
+**Outcomes:**
+- The AI reasoning layer detects patterns in observation streams, surfacing behavioral insights for operator review.
+- Decision context assembly provides historical context for pending decisions.
+- Preference learning identifies candidate preferences from observed behavior; all require operator approval.
+- The reflection engine operates across daily, weekly, monthly, and quarterly cycles, generating decisions rather than summaries.
+- All AI outputs are derived (Principle 7) and require operator review before influencing the persona.
+
+**Deliverables:**
+- AI reasoning layer: pattern detection, decision context assembly, preference learning
+- Reflection engine: multi-cycle orchestrator with daily/weekly/monthly/quarterly triggers
+- Decision store integration with decision context assembly
+- Pattern review interface (operator reviews and confirms/declines AI-suggested patterns)
+- Preference review interface (operator reviews and confirms/declines AI-suggested preferences)
+- Evaluation framework for AI reasoning output quality
+
+**Exit criteria:**
+- Pattern detection accuracy meets defined threshold (measured against operator review outcomes).
+- Decision context assembly reduces operator decision time for routine decisions (measured).
+- At least 4 weekly and 1 monthly reflection cycles have been completed and reviewed.
+- No AI output has modified the persona without operator approval.
+- Autonomy Stage 1 (AI Assistant) exit criteria satisfied for the executive reasoning domain.
+
+---
+
+### Phase 8 — Governed Autonomy
+
+**Objective:** Progress through defined autonomy stages under explicit governance, enabling selected autonomous operations within bounded scope — for both governed workflows (original Phase 7 intent) and executive function (identity context).
 
 **Outcomes:**
 - Autonomous operations are scoped, audited, and reversible.
+- The executive reasoning engine may autonomously deprioritize or resurface items within bounded scope and defined thresholds.
 - Governance controls escalate automatically when boundaries are approached.
-- The system maintains a complete audit trail for all autonomous actions.
+- The system maintains a complete audit trail for all autonomous actions in both runtime domains.
 
 **Deliverables:**
-- Autonomy governance controls implementation
-- Escalation and circuit-breaker policies
-- Autonomous operation audit reporting
-- ADRs for each autonomy stage transition
+- Autonomy governance controls for executive function (attention, prioritization bounds)
+- Escalation and circuit-breaker policies for executive daemon
+- Autonomous operation audit reporting across both runtimes
+- ADRs for each autonomy stage transition in both domains
 
 **Exit criteria:**
 - All exit criteria from the autonomy maturity model are satisfied for each stage reached.
+- Executive function autonomy operates within defined bounds without exceeding thresholds.
 - No autonomous operation has caused an uncontrolled, irreversible outcome.
 - Observability and override capability remain intact at all stages.
+- Delivery automation integration (deferred from original Phase 6) may be addressed within this phase.
 
 ---
 
@@ -201,6 +245,10 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 ## Related artifacts
 
 - [`docs/vision.md`](vision.md) — strategic intent this roadmap implements
-- [`governance/autonomy-maturity-model.md`](../governance/autonomy-maturity-model.md) — autonomy stages referenced in Phases 5–7
+- [`governance/autonomy-maturity-model.md`](../governance/autonomy-maturity-model.md) — autonomy stages referenced in Phases 7–8
 - [`governance/traceability-standard.md`](../governance/traceability-standard.md) — traceability applied throughout
 - [`adr/README.md`](../adr/README.md) — ADR process used at each phase
+- [ADR-007 — Identity as Domain Object](../adr/0007-identity-as-domain-object.md) — foundation for Phase 5
+- [ADR-008 — Observation Store Architecture](../adr/0008-observation-store-architecture.md) — foundation for Phase 5
+- [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — design for Phase 6–7
+- [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — infrastructure for Phase 6
