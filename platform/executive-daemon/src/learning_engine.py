@@ -49,6 +49,8 @@ class AggregatedWindow(NamedTuple):
     by_project: dict[str, int]
     by_energy: dict[str, int]
     deep_work_pct: float | None  # % of observations tagged as deep work
+    by_source_component: dict[str, int] | None = None  # component -> count
+    by_day_of_week: dict[str, int] | None = None  # monday -> count, etc.
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +72,9 @@ class ObservationAggregator:
         by_type: dict[str, int] = {}
         by_project: dict[str, int] = {}
         by_energy: dict[str, int] = {}
+        by_source_component: dict[str, int] = {}
+        by_day_of_week: dict[str, int] = {}
+        day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         deep_work_count = 0
 
         for obs in observations:
@@ -78,6 +83,11 @@ class ObservationAggregator:
                 by_project[obs.project] = by_project.get(obs.project, 0) + 1
             if obs.energy:
                 by_energy[obs.energy] = by_energy.get(obs.energy, 0) + 1
+            by_source_component[obs.source_component] = (
+                by_source_component.get(obs.source_component, 0) + 1
+            )
+            dow = day_names[obs.timestamp.weekday()]
+            by_day_of_week[dow] = by_day_of_week.get(dow, 0) + 1
             if deep_work_tags.intersection(obs.tags):
                 deep_work_count += 1
 
@@ -92,6 +102,8 @@ class ObservationAggregator:
             by_project=by_project,
             by_energy=by_energy,
             deep_work_pct=deep_work_pct,
+            by_source_component=by_source_component,
+            by_day_of_week=by_day_of_week,
         )
 
 
