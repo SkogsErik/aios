@@ -1,0 +1,87 @@
+# Audit log schema
+#
+# ID: SCHEMA-003
+# Defined in: ADR-006 — Model Gateway Technology Selection
+# Written by: platform/model-gateway/src/audit_log.py
+#
+# Each line in audit/audit.jsonl is a JSON object matching this schema.
+
+schema_version: "1.0"
+
+fields:
+  timestamp:
+    type: string
+    format: "ISO 8601 UTC"
+    description: Time at which the model call completed.
+
+  call_id:
+    type: string
+    pattern: "^gw-[0-9]+$"
+    description: Sequential gateway call identifier. Unique within the log file.
+
+  caller_id:
+    type: string
+    description: >
+      Identifier of the workflow, pipeline, or operator that initiated the call.
+      Traceability reference (WF-NNN, PIPELINE-NNN, or "operator").
+
+  model:
+    type: string
+    description: Full LiteLLM model identifier used for the call (e.g. "ollama/llama3.2").
+
+  provider:
+    type: string
+    description: Provider extracted from the model identifier (e.g. "ollama", "openai").
+
+  prompt_tokens:
+    type: integer
+    nullable: true
+    description: Number of tokens in the prompt, as reported by the provider.
+
+  completion_tokens:
+    type: integer
+    nullable: true
+    description: Number of tokens in the completion, as reported by the provider.
+
+  total_tokens:
+    type: integer
+    nullable: true
+    description: Total tokens consumed (prompt + completion).
+
+  cost_usd:
+    type: number
+    nullable: true
+    description: Estimated cost in USD, as reported by LiteLLM. 0.0 for local models.
+
+  latency_ms:
+    type: integer
+    description: Wall-clock latency of the model call in milliseconds.
+
+  status:
+    type: string
+    enum: [success, error, rate_limited, budget_exceeded, safety_blocked]
+    description: Outcome of the call.
+
+  error:
+    type: string
+    nullable: true
+    description: Error message if status is not "success".
+
+  context:
+    type: object
+    nullable: true
+    description: >
+      Arbitrary caller-provided context recorded for traceability.
+      Examples: {"asset_id": "KA-042", "workflow_run": "run-007"}.
+
+  prompt_preview:
+    type: string
+    nullable: true
+    description: >
+      First 200 characters of the prompt, stored only when audit.log_content is true.
+
+  completion_preview:
+    type: string
+    nullable: true
+    description: >
+      First 200 characters of the completion, stored only when audit.log_content is true.

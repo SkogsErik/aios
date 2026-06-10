@@ -16,8 +16,8 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 |---|---|---|
 | Phase 1 | Repository Bootstrap | ✅ Complete |
 | Phase 2 | Architecture Baseline | ✅ Complete |
-| Phase 3 | Knowledge Baseline | 🔄 Active |
-| Phase 4 | Runtime and Workflow Baseline | Pending |
+| Phase 3 | Knowledge Baseline | ✅ Complete |
+| Phase 4 | Runtime and Workflow Baseline | 🔄 Active |
 | Phase 5 | Human-in-the-Loop Assistance | Pending |
 | Phase 6 | Delivery Integration | Pending |
 | Phase 7 | Controlled Autonomy | Pending |
@@ -79,7 +79,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 3 — Knowledge Baseline 🔄 Active
+### Phase 3 — Knowledge Baseline ✅ Complete
 
 **Objective:** Establish the knowledge platform with ingestion, storage, retrieval, and lifecycle governance.
 
@@ -89,20 +89,20 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - The minimal viable ontology is implemented in the knowledge store schema.
 
 **Deliverables:**
-- `platform/knowledge/` — knowledge platform implementation
-- Ingestion pipeline for at least one document format
-- Retrieval interface (not necessarily AI-powered at this stage)
-- Backup and restore capability for the knowledge store
+- ✅ `platform/knowledge/` — knowledge platform implementation
+- ✅ Ingestion pipeline for at least one document format
+- ✅ Retrieval interface (not necessarily AI-powered at this stage)
+- ✅ Backup and restore capability for the knowledge store
 - *(ADR-003 — knowledge persistence approach already accepted in Phase 2)*
 
 **Exit criteria:**
-- Knowledge assets can be created, stored, retrieved, and versioned.
-- Provenance metadata is captured for all ingested assets.
-- Backup and restore procedures are documented and tested.
+- ✅ Knowledge assets can be created, stored, retrieved, and versioned.
+- ✅ Provenance metadata is captured for all ingested assets.
+- ✅ Backup and restore procedures are documented and tested.
 
 ---
 
-### Phase 4 — Runtime and Workflow Baseline
+### Phase 4 — Runtime and Workflow Baseline 🔄 Active
 
 **Objective:** Introduce a governed workflow runtime capable of executing bounded, inspectable workflows.
 
@@ -112,10 +112,12 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - The model gateway mediates all AI model access.
 
 **Deliverables:**
-- `platform/model-gateway/` — model gateway implementation
-- `workflows/` — initial workflow definitions
-- Workflow audit log
-- ADRs for workflow engine and model gateway technology selections
+- ✅ `platform/model-gateway/` — model gateway implementation
+- ✅ `platform/workflow-runtime/` — workflow runtime implementation
+- ✅ `workflows/` — initial workflow definitions (WF-001, WF-002)
+- ✅ Workflow audit log (run records in `platform/workflow-runtime/runs/`)
+- ✅ ADR-005 — workflow engine technology selection
+- ✅ ADR-006 — model gateway technology selection
 
 **Exit criteria:**
 - At least two end-to-end workflows execute successfully and are auditable.

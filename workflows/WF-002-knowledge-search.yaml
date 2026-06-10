@@ -1,0 +1,61 @@
+# WF-002 — Knowledge Store Search
+#
+# ID: WF-002
+# Capability: CAP-001 (Knowledge Management)
+# Version: 1
+# Status: Active
+# Last reviewed: 2026-06-10
+#
+# Defined in: ADR-003 (knowledge persistence), ADR-005 (workflow engine)
+#
+# Purpose:
+#   Search the knowledge store for assets matching a query and optional
+#   domain filter. Returns ranked results with metadata summaries.
+#
+# Exit criteria met:
+#   - Knowledge assets can be retrieved by semantic search (Phase 3)
+#   - Retrieval is auditable and reproducible (Phase 4)
+
+id: WF-002
+title: Knowledge Store Search
+version: 1
+capability: CAP-001
+description: >
+  Searches the AIOS knowledge store using keyword or fuzzy matching.
+  Returns a list of matching assets with metadata.
+
+inputs:
+  - name: query
+    description: Search query string.
+    required: true
+  - name: domain
+    description: >
+      Restrict search to a knowledge domain.
+      One of: general, architecture, domain, operational.
+      Leave empty to search all domains.
+    required: false
+    default: ""
+  - name: top_k
+    description: Maximum number of results to return.
+    required: false
+    default: "10"
+
+tags:
+  - knowledge-management
+  - retrieval
+
+steps:
+  - id: step-1
+    name: Verify knowledge index exists
+    description: Check that the knowledge index is present before searching.
+    command: >
+      python platform/knowledge/src/cli.py index show
+    requires_approval: false
+
+  - id: step-2
+    name: Search knowledge store
+    description: Run the retrieval query and display matching assets.
+    command: >
+      python platform/knowledge/src/cli.py retrieve "{query}"
+      --top-k {top_k}
+    requires_approval: false

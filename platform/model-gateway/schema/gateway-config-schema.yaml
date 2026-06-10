@@ -1,0 +1,78 @@
+# Gateway configuration schema
+#
+# ID: SCHEMA-002
+# Defined in: ADR-006 — Model Gateway Technology Selection
+# Applied by: platform/model-gateway/src/config_loader.py
+
+schema_version: "1.0"
+
+fields:
+  default_model:
+    type: string
+    description: >
+      Default LiteLLM model identifier used when no model is specified in a call.
+      Format: "<provider>/<model-name>", e.g. "ollama/llama3.2" or "gpt-4o".
+
+  providers:
+    type: object
+    description: Provider-specific configuration blocks.
+    fields:
+      ollama:
+        type: object
+        fields:
+          api_base:
+            type: string
+            description: Base URL for the Ollama server (default: http://localhost:11434).
+      openai:
+        type: object
+        fields:
+          api_key_env:
+            type: string
+            description: Environment variable name that holds the OpenAI API key.
+      anthropic:
+        type: object
+        fields:
+          api_key_env:
+            type: string
+            description: Environment variable name that holds the Anthropic API key.
+
+  rate_limit:
+    type: object
+    fields:
+      requests_per_minute:
+        type: integer
+        minimum: 1
+        description: Maximum model calls per minute. Enforced per-process.
+
+  cost:
+    type: object
+    fields:
+      max_usd_per_day:
+        type: number
+        minimum: 0
+        description: >
+          Daily cost budget in USD. 0 means unlimited. Calls that would exceed
+          the budget emit a warning. Hard blocking requires setting
+          cost.block_on_budget_exceeded to true.
+      block_on_budget_exceeded:
+        type: boolean
+        description: If true, calls are rejected when the daily budget is exceeded.
+
+  safety:
+    type: object
+    fields:
+      enabled:
+        type: boolean
+        description: Enable basic safety pre- and post-filtering.
+
+  audit:
+    type: object
+    fields:
+      log_path:
+        type: string
+        description: Path to the JSONL audit log file (relative to gateway root or absolute).
+      log_content:
+        type: boolean
+        description: >
+          If true, prompt and completion text are stored in the audit log.
+          Disabled by default to avoid retaining sensitive content.

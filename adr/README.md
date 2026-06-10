@@ -120,6 +120,8 @@ Numbers are never reused. If an ADR is superseded, the original file is retained
 | [ADR-002](0002-model-gateway-pattern.md) | Model Gateway Pattern | Accepted |
 | [ADR-003](0003-knowledge-persistence-approach.md) | Knowledge Persistence Approach | Accepted |
 | [ADR-004](0004-identity-model.md) | Identity Model | Accepted |
+| [ADR-005](0005-workflow-engine-technology.md) | Workflow Engine Technology Selection | Accepted |
+| [ADR-006](0006-model-gateway-technology.md) | Model Gateway Technology Selection | Accepted |
 
 ---
 

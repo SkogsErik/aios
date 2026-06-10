@@ -105,6 +105,9 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-010 | `ontology/minimal-viable-ontology.md` |
 | DOC-011 | `docs/glossary.md` |
 | DOC-012 | `platform/knowledge/docs/backup-restore-runbook.md` |
+| DOC-013 | `platform/model-gateway/README.md` |
+| DOC-014 | `platform/workflow-runtime/README.md` |
+| DOC-015 | `workflows/README.md` |
 
 ### Architecture Decision Records
 
@@ -114,6 +117,15 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | ADR-002 | Model gateway pattern (`adr/0002-model-gateway-pattern.md`) |
 | ADR-003 | Knowledge persistence approach (`adr/0003-knowledge-persistence-approach.md`) |
 | ADR-004 | Identity model (`adr/0004-identity-model.md`) |
+| ADR-005 | Workflow engine technology selection (`adr/0005-workflow-engine-technology.md`) |
+| ADR-006 | Model gateway technology selection (`adr/0006-model-gateway-technology.md`) |
+
+### Workflows
+
+| ID | Description |
+|---|---|
+| WF-001 | Knowledge Asset Ingestion (`workflows/WF-001-knowledge-ingest.yaml`) |
+| WF-002 | Knowledge Store Search (`workflows/WF-002-knowledge-search.yaml`) |
 
 ---
 

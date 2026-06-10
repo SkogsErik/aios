@@ -1,0 +1,92 @@
+# Workflow definition schema
+#
+# ID: SCHEMA-004
+# Defined in: ADR-005 — Workflow Engine Technology Selection
+# Validated by: platform/workflow-runtime/src/validator.py
+
+schema_version: "1.0"
+
+required_fields:
+  id:
+    type: string
+    pattern: "^WF-[0-9]{3,}$"
+    description: >
+      Unique workflow identifier. Assigned sequentially.
+      Must be registered in governance/traceability-standard.md.
+
+  title:
+    type: string
+    description: Human-readable workflow title.
+
+  version:
+    type: integer
+    minimum: 1
+    description: Workflow definition version. Increment on every change.
+
+  capability:
+    type: string
+    pattern: "^CAP-[0-9]{3,}$"
+    description: Capability identifier this workflow implements.
+
+  steps:
+    type: list
+    items: step
+    min_items: 1
+    description: Ordered list of workflow steps.
+
+optional_fields:
+  description:
+    type: string
+    description: Human-readable workflow description.
+
+  inputs:
+    type: list
+    items: input_var
+    description: Declared input variables for the workflow.
+
+  tags:
+    type: list
+    items: string
+    description: Tags for categorisation.
+
+step:
+  required:
+    id:
+      type: string
+      description: Step identifier; unique within the workflow.
+    name:
+      type: string
+      description: Human-readable step name.
+    command:
+      type: string
+      description: >
+        Shell command to execute. Input variable references use {var_name} syntax.
+  optional:
+    requires_approval:
+      type: boolean
+      default: false
+      description: >
+        If true, the executor pauses and prompts the operator for approval
+        before executing this step.
+    description:
+      type: string
+      description: Description of what this step does.
+    allow_failure:
+      type: boolean
+      default: false
+      description: >
+        If true, a non-zero exit code does not abort the workflow.
+
+input_var:
+  required:
+    name:
+      type: string
+    description:
+      type: string
+  optional:
+    required:
+      type: boolean
+      default: false
+    default:
+      type: string
+      nullable: true
