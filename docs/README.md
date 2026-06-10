@@ -8,6 +8,7 @@ This directory contains the top-level strategic documentation for AIOS: vision, 
 |---|---|
 | [`vision.md`](vision.md) | Long-term vision, design intent, assumptions, and non-goals |
 | [`roadmap.md`](roadmap.md) | Phased delivery plan with outcomes, deliverables, and exit criteria |
+| [`glossary.md`](glossary.md) | Core terminology definitions used across all AIOS artefacts |
 
 ## Relationship to other directories
 
@@ -19,3 +20,4 @@ All documents here carry a `DOC-` identifier as defined in the [Traceability Sta
 
 - [`vision.md`](vision.md) — DOC-001
 - [`roadmap.md`](roadmap.md) — DOC-002
+- [`glossary.md`](glossary.md) — DOC-011

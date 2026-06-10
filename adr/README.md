@@ -117,6 +117,9 @@ Numbers are never reused. If an ADR is superseded, the original file is retained
 | ADR | Title | Status |
 |---|---|---|
 | [ADR-001](0001-bootstrap-repository-structure.md) | Bootstrap Repository Structure | Accepted |
+| [ADR-002](0002-model-gateway-pattern.md) | Model Gateway Pattern | Accepted |
+| [ADR-003](0003-knowledge-persistence-approach.md) | Knowledge Persistence Approach | Accepted |
+| [ADR-004](0004-identity-model.md) | Identity Model | Accepted |
 
 ---
 

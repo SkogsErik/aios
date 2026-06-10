@@ -53,6 +53,7 @@ Complete the architecture baseline documented in `docs/roadmap.md`. The first mi
 |---|---|
 | Vision | [`docs/vision.md`](docs/vision.md) |
 | Roadmap | [`docs/roadmap.md`](docs/roadmap.md) |
+| Glossary | [`docs/glossary.md`](docs/glossary.md) |
 | Architecture Principles | [`architecture/principles.md`](architecture/principles.md) |
 | Target Architecture | [`architecture/target-architecture.md`](architecture/target-architecture.md) |
 | Capability Map | [`architecture/capability-map.md`](architecture/capability-map.md) |
@@ -63,3 +64,6 @@ Complete the architecture baseline documented in `docs/roadmap.md`. The first mi
 | Minimal Viable Ontology | [`ontology/minimal-viable-ontology.md`](ontology/minimal-viable-ontology.md) |
 | ADR Process | [`adr/README.md`](adr/README.md) |
 | Bootstrap ADR | [`adr/0001-bootstrap-repository-structure.md`](adr/0001-bootstrap-repository-structure.md) |
+| Model Gateway ADR | [`adr/0002-model-gateway-pattern.md`](adr/0002-model-gateway-pattern.md) |
+| Knowledge Persistence ADR | [`adr/0003-knowledge-persistence-approach.md`](adr/0003-knowledge-persistence-approach.md) |
+| Identity Model ADR | [`adr/0004-identity-model.md`](adr/0004-identity-model.md) |
