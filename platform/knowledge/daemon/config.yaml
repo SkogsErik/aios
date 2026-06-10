@@ -1,0 +1,6 @@
+# Executive daemon configuration
+git:
+  repos:
+    /home/jck/AI/Development/aios:
+      project: PRJ-000
+      tag_prefix: ""
