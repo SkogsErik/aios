@@ -42,6 +42,15 @@ Downward traceability: higher-level artefacts list their known children.
 | Architecture Decision Record | `ADR` | `ADR-001` | `ADR-NNN` |
 | Workflow | `WF` | `WF-001` | `WF-NNN` |
 | Document | `DOC` | `DOC-001` | `DOC-NNN` |
+| Persona | `PRS` | `PRS-001` | `PRS-NNN` |
+| Observation | `OBS` | `OBS-001` | `OBS-NNN` |
+| Goal | `GL` | `GL-001` | `GL-NNN` |
+| Decision | `DEC` | `DEC-001` | `DEC-NNN` |
+| Preference | `PRF` | `PRF-001` | `PRF-NNN` |
+| Belief | `BLF` | `BLF-001` | `BLF-NNN` |
+| Habit | `HBT` | `HBT-001` | `HBT-NNN` |
+| Relationship | `REL` | `REL-001` | `REL-NNN` |
+| Reflection | `RFL` | `RFL-001` | `RFL-NNN` |
 
 `NNN` is a zero-padded three-digit integer. IDs are assigned sequentially within each prefix. IDs are never reused.
 
@@ -108,6 +117,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-013 | `platform/model-gateway/README.md` |
 | DOC-014 | `platform/workflow-runtime/README.md` |
 | DOC-015 | `workflows/README.md` |
+| DOC-016 | `architecture/identity-centric-pivot-analysis.md` |
 
 ### Architecture Decision Records
 
