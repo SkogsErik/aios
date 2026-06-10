@@ -25,7 +25,7 @@ AIOS is intended to become durable cognitive infrastructure for thinking, learni
 | `knowledge/` | Knowledge architecture, taxonomy, and information management |
 | `ontology/` | Minimal viable ontology and its planned evolution |
 | `adr/` | Architecture Decision Records |
-| `platform/` | *(future)* Infrastructure and platform implementation |
+| `platform/` | Infrastructure and platform implementation (executive daemon, knowledge, model gateway) |
 | `workflows/` | *(future)* Workflow definitions and operational playbooks |
 | `agents/` | *(future)* Agent roles, policies, and evaluation artifacts |
 | `experiments/` | Bounded experiments; do not define the platform by default |
@@ -43,7 +43,49 @@ AIOS is designed to be:
 - **Incrementally autonomous** — autonomy is introduced stage by stage, with explicit controls at each stage
 - **Simply founded** — complex orchestration is deferred until simple foundations are proven
 
-## Near-term objective
+## Quick start
+
+Prerequisites: **Python 3.11+**, `git`, `pip3`
+
+```bash
+# 1. Clone and install dependencies
+git clone https://github.com/SkogsErik/aios.git
+cd aios
+pip3 install --break-system-packages -r platform/executive-daemon/requirements.txt
+
+# 2. Verify — all tests should pass
+cd platform/executive-daemon
+PYTHONPATH=src python3 -m pytest tests/test_project_store.py \
+  tests/test_rules_engine.py tests/test_attention_manager.py \
+  tests/test_learning_engine.py tests/test_pattern_detector.py \
+  tests/test_stores.py -q
+cd ../..
+
+# 3. Initialise your persona
+python3 platform/executive-daemon/src/cli.py persona init --name "Your Name"
+python3 platform/executive-daemon/src/cli.py persona set-value "Deep work" --priority 1
+python3 platform/executive-daemon/src/cli.py persona add-fact "I focus best in the morning" --category habit
+
+# 4. Start the background daemon (watches git, runs every 5 minutes)
+python3 platform/executive-daemon/src/cli.py start
+python3 platform/executive-daemon/src/cli.py status
+
+# 5. Add a project and a commitment
+python3 platform/executive-daemon/src/cli.py project add "AIOS Phase 5" --weight 0.9
+python3 platform/executive-daemon/src/cli.py commit add "Ship learning engine" \
+  --deadline 2026-07-01 --project PRJ-001 --weight 0.8
+
+# 6. Record an observation
+python3 platform/executive-daemon/src/cli.py observe "Good focus session on the rules engine" \
+  --energy high --project PRJ-001
+
+# 7. Review patterns (after a few cycles)
+python3 platform/executive-daemon/src/cli.py patterns
+```
+
+See [`platform/executive-daemon/README.md`](platform/executive-daemon/README.md) for the full CLI reference.
+
+
 
 Complete the architecture baseline documented in `docs/roadmap.md`. The first milestone is a repository and documentation system capable of governing future platform decisions, knowledge growth, workflow automation, and controlled autonomy.
 
