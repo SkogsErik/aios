@@ -13,6 +13,8 @@ import sys
 import time
 from pathlib import Path
 
+import yaml
+
 from attention_manager import (
     AttentionManager,
     AttentionState,
@@ -92,6 +94,8 @@ class ExecutiveDaemon:
             print("Daemon is already running (PID {})".format(self._pid_file.read()))
             return
         self._state_mgr.ensure_dirs()
+        if self._config.daemonize:
+            self._daemonize()
         self._running = True
         self._pid_file.write(os.getpid())
         signal.signal(signal.SIGTERM, self._handle_signal)
@@ -103,6 +107,37 @@ class ExecutiveDaemon:
         logger.info("Daemon stopping")
         self._running = False
         self._pid_file.remove()
+
+    # -------------------------------------------------------------------
+    # Daemonization
+    # -------------------------------------------------------------------
+
+    def _daemonize(self) -> None:
+        pid = os.fork()
+        if pid > 0:
+            print("Daemon started")
+            sys.stdout.flush()
+            os._exit(0)
+        os.setsid()
+        os.umask(0)
+        pid = os.fork()
+        if pid > 0:
+            os._exit(0)
+        self._redirect_stdio()
+
+    def _redirect_stdio(self) -> None:
+        log_path = self._state_mgr._base / "daemon" / "daemon.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        devnull_fd = os.open(os.devnull, os.O_RDONLY)
+        log_fd = os.open(str(log_path), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        os.dup2(devnull_fd, 0)
+        os.dup2(log_fd, 1)
+        os.dup2(log_fd, 2)
+        for fd in (devnull_fd, log_fd):
+            if fd > 2:
+                os.close(fd)
 
     def _handle_signal(self, signum, frame) -> None:
         logger.info("Received signal %d", signum)
@@ -210,7 +245,6 @@ class ExecutiveDaemon:
     # -------------------------------------------------------------------
 
     def _save_observation(self, obs: Observation) -> None:
-        import yaml
         date_str = obs.timestamp.strftime("%Y-%m-%d")
         obs_dir = self._state_mgr._base / "observations" / obs.timestamp.strftime("%Y/%m")
         obs_dir.mkdir(parents=True, exist_ok=True)
@@ -235,34 +269,39 @@ class ExecutiveDaemon:
             yaml.dump(records, f, default_flow_style=False, sort_keys=False)
 
     def _load_tracked_items(self) -> list[RETrackedItem]:
-        default_projects = {"PRJ-000", "PRJ-001", "PRJ-002"}
-        items: list[RETrackedItem] = []
-        for pid in default_projects:
-            items.append(
-                RETrackedItem(
-                    id=pid,
-                    attention_state=AttentionState.ACTIVE,
-                    last_touch=datetime.date.today(),
-                    kind="project",
-                )
-            )
-        return items
+        from project_store import ProjectStore
+        store = ProjectStore(self._state_mgr._base / "projects")
+        return store.list_as_tracked_items()
 
     def _load_commitments(self) -> list[Commitment]:
-        return []
+        from project_store import CommitmentStore
+        store = CommitmentStore(self._state_mgr._base / "commitments")
+        return store.list_as_rules_engine_commitments()
 
     def _load_declared_values(self) -> list[DeclaredValue]:
-        return []
+        values_path = self._state_mgr._base / "persona" / "values.yaml"
+        if not values_path.exists():
+            return []
+        with open(values_path) as f:
+            data = yaml.safe_load(f) or {}
+        result: list[DeclaredValue] = []
+        for entry in data.get("values", []):
+            result.append(
+                DeclaredValue(
+                    attribute=entry["attribute"],
+                    value=entry["value"],
+                    weight=entry.get("weight", 0.5),
+                )
+            )
+        return result
 
     def _load_recent_observations(self) -> list[Observation]:
-        import os as _os
         results: list[Observation] = []
         base = self._state_mgr._base / "observations"
         if not base.exists():
             return results
         cutoff = datetime.date.today() - datetime.timedelta(days=90)
-        import yaml
-        for root, _dirs, files in _os.walk(base):
+        for root, _dirs, files in os.walk(base):
             for fn in sorted(files, reverse=True):
                 if not fn.endswith(".yaml"):
                     continue

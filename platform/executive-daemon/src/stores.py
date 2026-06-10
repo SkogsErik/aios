@@ -39,7 +39,9 @@ from learning_engine import (
 # Default storage paths
 # ---------------------------------------------------------------------------
 
-DEFAULT_BASE_DIR = Path("platform/knowledge")
+# Resolve base dir relative to repository root (3 levels up from src/)
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+DEFAULT_BASE_DIR = _REPO_ROOT / "platform" / "knowledge"
 PATTERNS_DIR = DEFAULT_BASE_DIR / "patterns"
 CONTRADICTIONS_DIR = DEFAULT_BASE_DIR / "contradictions"
 PREDICTIONS_DIR = DEFAULT_BASE_DIR / "predictions"

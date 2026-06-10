@@ -17,7 +17,9 @@ from typing import NamedTuple
 import yaml
 
 
-DEFAULT_BASE_DIR = Path("platform/knowledge")
+# Resolve base dir relative to repository root (3 levels up from src/)
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+DEFAULT_BASE_DIR = _REPO_ROOT / "platform" / "knowledge"
 STATE_FILE = DEFAULT_BASE_DIR / "daemon" / "state.yaml"
 
 

@@ -1,0 +1,10 @@
+# Persona declared values for preference reconciliation.
+# Each entry declares what the operator values and how much.
+#   attribute: the dimension being measured (must match _extract_observed in learning_engine)
+#   value:     the target/ideal value (0.0–1.0)
+#   weight:    how important this value is (0.0–1.0), used for prioritization
+
+values:
+  - attribute: deep_work_weight
+    value: 0.8
+    weight: 0.9

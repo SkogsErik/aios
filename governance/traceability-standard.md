@@ -52,7 +52,6 @@ Downward traceability: higher-level artefacts list their known children.
 | Habit | `HBT` | `HBT-001` | `HBT-NNN` |
 | Relationship | `REL` | `REL-001` | `REL-NNN` |
 | Reflection | `RFL` | `RFL-001` | `RFL-NNN` |
-| Project | `PRJ` | `PRJ-001` | `PRJ-NNN` |
 | Commitment | `CMT` | `CMT-001` | `CMT-NNN` |
 | Focus Area | `FCA` | `FCA-001` | `FCA-NNN` |
 | Responsibility | `RSP` | `RSP-001` | `RSP-NNN` |

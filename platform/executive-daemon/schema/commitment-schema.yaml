@@ -1,0 +1,65 @@
+# Commitment Schema
+#
+# Defined by: ADR-007 (Identity as Domain Object)
+# Capability: CAP-013 (Executive Function)
+# Storage: platform/knowledge/commitments/CMT-NNN.yaml
+
+schema_version: "1.0"
+
+required:
+  id:
+    type: string
+    pattern: "^CMT-[0-9]{3,}$"
+    description: Unique commitment identifier. Assigned sequentially. Never reused.
+
+  description:
+    type: string
+    description: What was promised.
+
+  deadline:
+    type: string
+    format: date
+    description: ISO 8601 date by which the commitment must be fulfilled (YYYY-MM-DD).
+
+  status:
+    type: string
+    enum: [active, fulfilled, broken, deferred, cancelled]
+    description: Current status of the commitment.
+
+  created:
+    type: string
+    format: date
+    description: ISO 8601 date the commitment was recorded.
+
+  updated:
+    type: string
+    format: date
+    description: ISO 8601 date of the last update.
+
+optional:
+  project:
+    type: string
+    pattern: "^PRJ-[0-9]{3,}$"
+    description: Project this commitment relates to (PRJ-NNN).
+
+  promisee:
+    type: string
+    description: >
+      Who the promise was made to. Use "self" for self-commitments,
+      or a name/identifier for commitments to others.
+
+  weight:
+    type: float
+    minimum: 0.0
+    maximum: 1.0
+    description: >
+      Operator-declared importance weight (0.0–1.0). Higher weight increases
+      priority scoring urgency in the rules engine.
+
+  consequences:
+    type: string
+    description: What happens if this commitment is broken.
+
+  notes:
+    type: string
+    description: Additional context.
