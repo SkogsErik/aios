@@ -126,6 +126,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-015 | `workflows/README.md` |
 | DOC-016 | `architecture/identity-centric-pivot-analysis.md` |
 | DOC-017 | `architecture/executive-cognition-analysis.md` |
+| DOC-018 | `architecture/pivot-readiness-assessment.md` |
 
 ### Architecture Decision Records
 
