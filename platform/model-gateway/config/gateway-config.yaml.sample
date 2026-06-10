@@ -1,0 +1,44 @@
+# Gateway configuration — sample
+#
+# Copy this file to gateway-config.yaml and edit as needed.
+# Provider API keys are NOT stored here; use environment variables.
+#
+# Defined by: ADR-006 — Model Gateway Technology Selection
+
+# Default model used when no model is specified in a call.
+# Format: "<provider>/<model>" (LiteLLM convention).
+# Use "ollama/llama3.2" for local Ollama or "gpt-4o-mini" for OpenAI.
+default_model: "ollama/llama3.2"
+
+providers:
+  ollama:
+    # Base URL of your local Ollama server
+    api_base: "http://localhost:11434"
+
+  openai:
+    # Set OPENAI_API_KEY in your environment to enable OpenAI
+    api_key_env: "OPENAI_API_KEY"
+
+  anthropic:
+    # Set ANTHROPIC_API_KEY in your environment to enable Anthropic
+    api_key_env: "ANTHROPIC_API_KEY"
+
+rate_limit:
+  # Maximum model calls per minute (enforced per process)
+  requests_per_minute: 60
+
+cost:
+  # Daily USD budget. Set to 0 for unlimited.
+  max_usd_per_day: 5.0
+  # If true, calls are hard-blocked when the daily budget is exceeded.
+  block_on_budget_exceeded: false
+
+safety:
+  # Enable basic input/output safety filtering
+  enabled: true
+
+audit:
+  # Path to the JSONL audit log (relative to platform/model-gateway/ or absolute)
+  log_path: "audit/audit.jsonl"
+  # Store prompt and completion text in the log (disabled by default)
+  log_content: false

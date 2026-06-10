@@ -1,0 +1,82 @@
+# WF-001 — Knowledge Asset Ingestion
+#
+# ID: WF-001
+# Capability: CAP-001 (Knowledge Management)
+# Version: 1
+# Status: Active
+# Last reviewed: 2026-06-10
+#
+# Defined in: ADR-003 (knowledge persistence), ADR-005 (workflow engine)
+#
+# Purpose:
+#   Ingest a Markdown document into the knowledge store with provenance
+#   tracking. This is the standard workflow for adding new canonical
+#   knowledge assets.
+#
+# Exit criteria met:
+#   - Knowledge assets can be created, stored, and versioned (Phase 3)
+#   - Provenance metadata is captured for all ingested assets (Phase 3)
+#   - Workflow executes end-to-end and is auditable (Phase 4)
+
+id: WF-001
+title: Knowledge Asset Ingestion
+version: 1
+capability: CAP-001
+description: >
+  Ingests a Markdown document into the AIOS knowledge store.
+  Validates the source file, ingests it with provenance metadata,
+  and rebuilds the knowledge index.
+
+inputs:
+  - name: source_file
+    description: Absolute or relative path to the source Markdown file.
+    required: true
+  - name: domain
+    description: >
+      Knowledge domain to assign the asset to.
+      One of: general, architecture, domain, operational.
+    required: false
+    default: general
+  - name: title
+    description: Override the asset title (optional; defaults to front-matter or filename).
+    required: false
+    default: ""
+  - name: tags
+    description: Comma-separated tags to apply to the asset (optional).
+    required: false
+    default: ""
+
+tags:
+  - knowledge-management
+  - ingestion
+
+steps:
+  - id: step-1
+    name: Validate source file exists
+    description: Check that the source file is present and readable.
+    command: "test -f {source_file} && echo 'Source file found: {source_file}'"
+    requires_approval: false
+
+  - id: step-2
+    name: Ingest document into knowledge store
+    description: >
+      Run the ingestion pipeline. Assigns a KA-NNN identifier, captures
+      provenance metadata, and writes the asset to the store.
+    command: >
+      python platform/knowledge/src/cli.py ingest "{source_file}"
+      --domain "{domain}"
+      --title "{title}"
+      --tags "{tags}"
+    requires_approval: false
+
+  - id: step-3
+    name: Rebuild knowledge index
+    description: Regenerate the asset index to include the newly ingested asset.
+    command: python platform/knowledge/src/cli.py index rebuild
+    requires_approval: false
+
+  - id: step-4
+    name: Verify asset is retrievable
+    description: List all assets to confirm the ingested asset appears in the store.
+    command: python platform/knowledge/src/cli.py list
+    requires_approval: false
