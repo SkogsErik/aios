@@ -257,7 +257,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
-### CAP-014 — Reflection and Learning
+### CAP-014 — Reflection Cycles
 
 **Purpose:** Synthesize observations into insights across daily, weekly, monthly, and quarterly cycles. Generate decisions, update the persona, and refine priorities through structured reflection.
 
@@ -276,6 +276,27 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
+### CAP-015 — Understanding and Inference
+
+**Purpose:** Detect behavioral patterns, reconcile observed behavior against declared values, build a confidence-weighted model of operator tendencies, and evolve that model through feedback. This is the mechanism that moves the system from remembering to understanding.
+
+**Primary layer:** Layer 6b — Executive Daemon (learning engine); Layer 4 — Knowledge Platform (pattern, contradiction, prediction stores)
+
+**Capabilities:**
+- Aggregate raw observations into temporal windows (daily, weekly, monthly, quarterly)
+- Detect behavioral patterns: preference-behavior divergence, biases, cycles, attention cliffs, energy correlations, completion signatures, rejection patterns
+- Reconcile detected patterns against the canonical persona, producing tension scores
+- Compute deterministic confidence scores (0.0–1.0) for every detected pattern using base rate, consistency, recency, specificity, and feedback history
+- Generate review candidates for patterns above the surface threshold (>= 0.4 confidence)
+- Accept operator feedback on candidates and adjust confidence scores accordingly
+- Auto-archive pattern types after 3 consecutive operator rejections within 30 days
+- Self-evaluate predictions when their prediction window closes, and adjust source pattern confidence
+- Maintain pattern lifecycle: detected → candidate → surfaced → reviewed → active/archived/superseded/promoted
+
+**Dependencies:** CAP-011 (Persona for declared values), CAP-012 (Observations for raw material), CAP-003 (AI and Model Management for pattern detection), CAP-013 (Executive Function for priority context)
+
+---
+
 ## Capability-to-layer mapping
 
 | Capability | Primary Layer |
@@ -290,6 +311,11 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 | CAP-008 Evaluation | Layers 3, 4, 6 |
 | CAP-009 Memory and Provenance | Layers 4, 5 |
 | CAP-010 User and Operator Experience | Layer 8 |
+| CAP-011 Identity and Persona Management | Layer 2, Layer 4 |
+| CAP-012 Observation and Capture | Layer 4, Layer 6 |
+| CAP-013 Executive Function | Layer 6b |
+| CAP-014 Reflection Cycles | Layer 6b, Layer 4 |
+| CAP-015 Understanding and Inference | Layer 6b, Layer 4 |
 
 ## Related artifacts
 

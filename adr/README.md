@@ -126,6 +126,7 @@ Numbers are never reused. If an ADR is superseded, the original file is retained
 | [ADR-008](0008-observation-store-architecture.md) | Observation Store Architecture | Accepted |
 | [ADR-009](0009-executive-reasoning-engine-pattern.md) | Executive Reasoning Engine Pattern | Accepted |
 | [ADR-010](0010-runtime-model-evolution.md) | Runtime Model Evolution | Accepted |
+| [ADR-011](0011-learning-architecture.md) | Learning Architecture | Accepted |
 
 ---
 

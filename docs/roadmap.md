@@ -183,31 +183,36 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 7 — AI-Assisted Executive Function
+### Phase 7 — Understanding and Inference
 
-**Objective:** Introduce the AI reasoning layer (Layer 2) on top of the deterministic executive foundation, enabling pattern detection, decision support, preference learning, and multi-cycle reflection.
+**Objective:** Deploy the learning architecture (ADR-011) — the five-stage inference pipeline that moves the system from remembering to understanding. This enables the system to detect behavioral patterns, reconcile action against values, and build a confidence-weighted model of operator tendencies.
 
 **Outcomes:**
-- The AI reasoning layer detects patterns in observation streams, surfacing behavioral insights for operator review.
-- Decision context assembly provides historical context for pending decisions.
-- Preference learning identifies candidate preferences from observed behavior; all require operator approval.
-- The reflection engine operates across daily, weekly, monthly, and quarterly cycles, generating decisions rather than summaries.
-- All AI outputs are derived (Principle 7) and require operator review before influencing the persona.
+- The learning engine detects behavioral patterns (preference-behavior divergence, biases, cycles, energy correlations) from observation streams.
+- Detected patterns are scored by a deterministic confidence formula and surfaced as review candidates.
+- Operator feedback on candidates is captured as first-class observations and feeds back into the model.
+- The reconciliation engine compares observed behavior against the canonical persona, flagging tensions for review.
+- Predictions are self-evaluating: when a prediction window closes, the system confirms or refutes the prediction automatically.
+- All learning engine outputs are derived (Principle 7) and require operator review before promoting to canonical persona.
+- Pattern lifecycle (detected → candidate → surfaced → reviewed → active/archived/superseded/promoted) is operational.
 
 **Deliverables:**
-- AI reasoning layer: pattern detection, decision context assembly, preference learning
-- Reflection engine: multi-cycle orchestrator with daily/weekly/monthly/quarterly triggers
-- Decision store integration with decision context assembly
-- Pattern review interface (operator reviews and confirms/declines AI-suggested patterns)
-- Preference review interface (operator reviews and confirms/declines AI-suggested preferences)
-- Evaluation framework for AI reasoning output quality
+- `platform/executive-daemon/src/learning_engine.py` — five-stage inference pipeline (aggregation, pattern detection, reconciliation, confidence scoring, candidate generation)
+- Inferred Pattern Store (PAT-... schema): lifecycle, confidence, evidence, feedback history
+- Contradiction Store (CTR-... schema): tensions between declared values and observed behavior
+- Prediction Store (PRD-... schema): self-evaluating predictions with outcome windows
+- Pattern review interface: operator reviews, accepts, rejects, modifies, dismisses, or snoozes candidates
+- Feedback integration: operator responses feed back into confidence scoring and pattern type weighting
+- Self-evaluation scheduler: evaluates predictions when their windows close
+- ADR-011 (Learning Architecture)
 
 **Exit criteria:**
-- Pattern detection accuracy meets defined threshold (measured against operator review outcomes).
-- Decision context assembly reduces operator decision time for routine decisions (measured).
-- At least 4 weekly and 1 monthly reflection cycles have been completed and reviewed.
-- No AI output has modified the persona without operator approval.
-- Autonomy Stage 1 (AI Assistant) exit criteria satisfied for the executive reasoning domain.
+- At least one behavioral pattern type (preference-behavior divergence, bias, cycle, or energy correlation) is detectable and surfaced for review.
+- Operator feedback on at least 5 pattern candidates has been captured and processed.
+- At least one prediction has been generated and self-evaluated (confirmed or refuted).
+- Confidence scoring is deterministic and auditable: any pattern's score is reproducible from the same inputs.
+- No learning engine output has modified the canonical persona without operator approval.
+- ADR-011 is accepted and reflected in the target architecture and capability map.
 
 ---
 

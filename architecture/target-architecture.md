@@ -195,7 +195,7 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 - No workflow may bypass the model gateway (Layer 3) for model calls
 - Autonomy stage governs which workflow types are permitted to run autonomously
 
-### Sub-layer 6b — Executive Daemon (continuous executive function)
+### Sub-layer 6b — Executive Daemon (continuous executive function + scheduled learning)
 
 **Responsibilities:**
 - Persistent event loop: monitors time triggers, state changes, and external events
@@ -203,20 +203,22 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 - Rules engine (Layer 1, deterministic): stall detection, deadline scoring, fragmentation alerts, dependency traversal, unblocking notifications (per ADR-009)
 - Priority computation: deterministic scoring (urgency × commitment_weight × momentum)
 - Reflection engine: schedules and orchestrates daily/weekly/monthly/quarterly reflection cycles
+- **Learning engine** (Layer 2, scheduled, model-dependent): pattern detection, preference reconciliation, confidence scoring, candidate generation, prediction evaluation (per ADR-011)
 - Trigger evaluation: evaluates rules engine triggers and produces operator notifications
 - State checkpointing: periodic serialization of attention state, priority rankings, and daemon state
 
 **Non-responsibilities:**
 - Executing governed workflows (delegated to Sub-layer 6a)
-- Making model calls (delegated to Layer 3; AI reasoning in Layer 2 of ADR-009 is optional and scheduled)
+- Making model calls (delegated to Layer 3; AI reasoning in Layer 2 is optional and scheduled)
 - Modifying persona attributes (all executive inferences are derived; operator approval required for promotion)
 
 **Boundaries:**
 - The executive daemon is optional; the system operates without it at reduced capability (no proactive alerts, no attention management, no reflection scheduling)
 - The daemon does not require AI model availability for any Layer 1 (deterministic) operation
-- Layer 2 (AI reasoning) is scheduled separately and requires model gateway access
+- **Layer 2 (AI reasoning / learning engine)** is scheduled separately and requires model gateway access; it degrades gracefully when unavailable — patterns are simply not updated
 - State is persisted to shared stores in Layer 4; daemon restart restores from last checkpoint
 - All executive daemon outputs are visible to the operator for review and override
+- **All learning engine outputs are derived** (Principle 7) and require operator review before influencing the persona
 
 ---
 
@@ -276,7 +278,8 @@ The following concerns apply across all layers:
 | Security | Layer 2 (enforcement); each layer participates | Identity context flows through all layers |
 | Traceability | Layer 5 (definition); applied by all layers | All components reference capability IDs |
 | Backup/restore | Layer 1 (infrastructure); Layers 4 and 5 define policy | Knowledge and governance artefacts are backed up |
-| Executive context | Layer 2 (persona), Layer 4 (stores), Layer 6b (daemon) | Persona, attention, priorities, and decisions form the executive context available to higher layers |
+| Executive context | Layer 2 (persona), Layer 4 (stores), Layer 6b (daemon) | Persona, attention, priorities, decisions, and inferred patterns form the executive context available to higher layers |
+| Learning & inference | Layer 6b (learning engine), Layer 4 (pattern stores) | Inferred patterns, contradictions, and predictions are derived assets managed through feedback loops |
 
 ## Related artifacts
 
@@ -286,5 +289,6 @@ The following concerns apply across all layers:
 - [`governance/autonomy-maturity-model.md`](../governance/autonomy-maturity-model.md) — autonomy constraints on Layer 6
 - [ADR-007 — Identity as Domain Object](../adr/0007-identity-as-domain-object.md) — Layer 2 persona model update
 - [ADR-008 — Observation Store Architecture](../adr/0008-observation-store-architecture.md) — Layer 4 observation store addition
-- [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — Layer 6b rules engine design
+- [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — Layer 6b rules engine + AI reasoning design
 - [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — Layer 6 two-runtime model
+- [ADR-011 — Learning Architecture](../adr/0011-learning-architecture.md) — Layer 6b learning engine design
