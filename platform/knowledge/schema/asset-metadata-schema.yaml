@@ -1,0 +1,124 @@
+# Knowledge Asset Metadata Schema
+#
+# ID: SCHEMA-001
+# Defined in: ADR-003 — Knowledge Persistence Approach
+# Applied by: platform/knowledge/src/ingest.py
+#
+# All fields listed under 'required' must be present in every knowledge asset file.
+# Fields listed under 'optional' are recommended but not enforced at ingestion time.
+
+schema_version: "1.0"
+
+required:
+  id:
+    type: string
+    pattern: "^KA-[0-9]{3,}$"
+    description: >
+      Unique knowledge asset identifier. Assigned sequentially by the ingestion
+      pipeline. Never reused.
+
+  title:
+    type: string
+    description: Human-readable title for the asset.
+
+  status:
+    type: string
+    enum: [draft, active, review, deprecated, archived]
+    description: >
+      Lifecycle status of the asset.
+        draft     — being authored; not yet ready for use
+        active    — reviewed and available for use
+        review    — scheduled for periodic review; may still be used
+        deprecated — superseded or no longer recommended
+        archived  — retained for historical reference only
+
+  created:
+    type: string
+    format: date
+    description: ISO 8601 date on which the asset was created (YYYY-MM-DD).
+
+  updated:
+    type: string
+    format: date
+    description: ISO 8601 date of the last update to this asset (YYYY-MM-DD).
+
+  author:
+    type: string
+    description: Operator ID or system component ID that created the asset.
+
+  origin:
+    type: string
+    description: >
+      Source of the asset. One of:
+        manual          — authored directly by the operator
+        <workflow-id>   — produced by a named workflow
+        <pipeline-id>   — produced by an ingestion pipeline
+
+  version:
+    type: integer
+    minimum: 1
+    description: >
+      Integer version counter. Starts at 1. Incremented on every meaningful
+      update to the asset content or status.
+
+  provenance:
+    type: object
+    description: Provenance tracking fields.
+    fields:
+      source_uri:
+        type: string
+        nullable: true
+        description: Original source URI, if the asset was ingested from an external source.
+      ingested_via:
+        type: string
+        nullable: true
+        description: Ingestion pipeline identifier, if the asset was produced by a pipeline.
+
+  tags:
+    type: list
+    items: string
+    description: Free-form tags for categorisation and filtering.
+
+  related:
+    type: list
+    items: string
+    description: IDs of related knowledge assets (KA-NNN).
+
+optional:
+  canonical:
+    type: boolean
+    description: >
+      Whether this asset is canonical (true) or derived (false). Defaults to
+      true for manually authored assets. Derived assets must be explicitly
+      labelled.
+
+  reviewed_by:
+    type: string
+    description: Operator ID who reviewed and approved this asset (required for canonical active assets).
+
+  reviewed_at:
+    type: string
+    format: date
+    description: Date of the review that transitioned this asset to active status.
+
+  derived_from:
+    type: list
+    items: string
+    description: >
+      For derived assets: list of source asset IDs from which this asset was
+      generated.
+
+  sensitivity:
+    type: string
+    enum: [low, medium, high]
+    description: Sensitivity classification of the asset content.
+
+  retention_policy:
+    type: string
+    description: >
+      Retention period or rule. Examples: "3 years", "indefinite", "until superseded".
+
+# Evolution notes:
+#   - New fields may be added without a schema version bump.
+#   - Removing or renaming required fields requires a schema version bump and an ADR.
+#   - The schema version is recorded in each asset's front-matter when set to > "1.0".

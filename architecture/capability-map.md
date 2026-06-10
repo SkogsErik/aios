@@ -32,7 +32,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 - Manage knowledge lifecycle (draft → active → review → deprecated → archived)
 - Back up and restore the knowledge store
 
-**Dependencies:** CAP-008 (Security/Policy), CAP-009 (Memory/Provenance)
+**Dependencies:** CAP-007 (Security/Policy), CAP-009 (Memory/Provenance)
 
 ---
 
@@ -70,7 +70,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 - Declare available model capabilities
 - Support model evaluation and comparison
 
-**Dependencies:** CAP-008 (Security/Policy), CAP-010 (Evaluation)
+**Dependencies:** CAP-007 (Security/Policy), CAP-008 (Evaluation)
 
 ---
 
@@ -89,7 +89,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 - Associate workflow instances with capability IDs (traceability)
 - Manage workflow scheduling and retry policies
 
-**Dependencies:** CAP-003 (Model Management), CAP-008 (Security/Policy), CAP-001 (Knowledge)
+**Dependencies:** CAP-003 (Model Management), CAP-007 (Security/Policy), CAP-001 (Knowledge)
 
 ---
 
@@ -106,7 +106,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 - Automate release and deployment operations (gated by autonomy stage)
 - Capture delivery metrics and link to capability traceability
 
-**Dependencies:** CAP-004 (Workflow Orchestration), CAP-008 (Security/Policy)
+**Dependencies:** CAP-004 (Workflow Orchestration), CAP-007 (Security/Policy)
 
 ---
 

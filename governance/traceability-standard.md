@@ -104,6 +104,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-009 | `knowledge/knowledge-architecture.md` |
 | DOC-010 | `ontology/minimal-viable-ontology.md` |
 | DOC-011 | `docs/glossary.md` |
+| DOC-012 | `platform/knowledge/docs/backup-restore-runbook.md` |
 
 ### Architecture Decision Records
 

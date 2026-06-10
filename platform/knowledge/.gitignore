@@ -1,0 +1,11 @@
+# Backup archives — not committed; managed separately per the backup runbook
+backups/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
