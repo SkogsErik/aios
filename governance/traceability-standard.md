@@ -103,12 +103,16 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-008 | `governance/traceability-standard.md` (this document) |
 | DOC-009 | `knowledge/knowledge-architecture.md` |
 | DOC-010 | `ontology/minimal-viable-ontology.md` |
+| DOC-011 | `docs/glossary.md` |
 
 ### Architecture Decision Records
 
 | ID | Description |
 |---|---|
 | ADR-001 | Bootstrap repository structure (`adr/0001-bootstrap-repository-structure.md`) |
+| ADR-002 | Model gateway pattern (`adr/0002-model-gateway-pattern.md`) |
+| ADR-003 | Knowledge persistence approach (`adr/0003-knowledge-persistence-approach.md`) |
+| ADR-004 | Identity model (`adr/0004-identity-model.md`) |
 
 ---
 

@@ -10,9 +10,21 @@
 
 Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deliverables, and exit criteria. Phases are sequential; later phases should not begin until exit criteria for the current phase are met.
 
+## Phase status summary
+
+| Phase | Title | Status |
+|---|---|---|
+| Phase 1 | Repository Bootstrap | ✅ Complete |
+| Phase 2 | Architecture Baseline | 🔄 Active |
+| Phase 3 | Knowledge Baseline | Pending |
+| Phase 4 | Runtime and Workflow Baseline | Pending |
+| Phase 5 | Human-in-the-Loop Assistance | Pending |
+| Phase 6 | Delivery Integration | Pending |
+| Phase 7 | Controlled Autonomy | Pending |
+
 ## Phases
 
-### Phase 1 — Repository Bootstrap
+### Phase 1 — Repository Bootstrap ✅ Complete
 
 **Objective:** Establish a governed, navigable repository structure with a documented architecture baseline.
 
@@ -43,7 +55,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 2 — Architecture Baseline
+### Phase 2 — Architecture Baseline 🔄 Active
 
 **Objective:** Produce a complete, stable architecture baseline that is sufficient to govern near-term implementation decisions.
 
@@ -53,10 +65,12 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - A glossary of core terms is established.
 
 **Deliverables:**
-- Expanded `architecture/capability-map.md` with capability-to-layer mapping
-- `docs/glossary.md` — core terminology
-- ADRs for major architectural decisions (model gateway pattern, knowledge persistence approach, identity model)
-- Reviewed and updated `architecture/target-architecture.md`
+- ✅ Expanded `architecture/capability-map.md` with capability-to-layer mapping
+- ✅ `docs/glossary.md` — core terminology (DOC-011)
+- ✅ ADR-002: model gateway pattern
+- ✅ ADR-003: knowledge persistence approach
+- ✅ ADR-004: identity model
+- ✅ Reviewed and updated `architecture/target-architecture.md`
 
 **Exit criteria:**
 - All architecture documents are cross-referenced and internally consistent.
@@ -79,7 +93,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - Ingestion pipeline for at least one document format
 - Retrieval interface (not necessarily AI-powered at this stage)
 - Backup and restore capability for the knowledge store
-- ADR for knowledge persistence technology selection
+- *(ADR-003 — knowledge persistence approach already accepted in Phase 2)*
 
 **Exit criteria:**
 - Knowledge assets can be created, stored, retrieved, and versioned.
