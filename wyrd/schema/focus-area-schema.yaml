@@ -1,0 +1,49 @@
+# Focus Area Schema
+#
+# Defined by: ADR-007 (Identity as Domain Object)
+# Subsystem: Wyrd (ADR-012)
+# Capability: CAP-011 (Identity and Persona Management)
+# Storage: platform/knowledge/focus-areas/FCA-NNN.yaml
+
+schema_version: "1.0"
+
+required:
+  id:
+    type: string
+    pattern: "^FCA-[0-9]{3,}$"
+
+  title:
+    type: string
+
+  status:
+    type: string
+    enum: [active, paused, archived]
+
+  created:
+    type: string
+    format: date
+
+  updated:
+    type: string
+    format: date
+
+optional:
+  description:
+    type: string
+
+  why_it_matters:
+    type: string
+
+  attention_budget:
+    type: string
+    enum: [primary, secondary, maintenance, minimal]
+    description: Intended share of attention for this area.
+
+  goals:
+    type: list
+    items: string
+    description: GL-NNN IDs of goals within this focus area.
+
+  tags:
+    type: list
+    items: string

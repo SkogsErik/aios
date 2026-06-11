@@ -1,0 +1,95 @@
+# Persona Schema
+#
+# Defined by: ADR-007 (Identity as Domain Object)
+# Capability: CAP-011 (Identity and Persona Management)
+# Storage: platform/knowledge/persona/persona.yaml (single file, PRS-001)
+
+schema_version: "1.0"
+
+# The Persona is a single canonical file representing the operator.
+# It follows the canonical/derived split from Architecture Principle 7:
+#   - declared_facts, values, preferences: canonical (operator-authored)
+#   - inferred_attributes: derived (learning engine output; requires review before promotion)
+
+required:
+  id:
+    type: string
+    pattern: "^PRS-[0-9]{3,}$"
+    description: Persona identifier. Always PRS-001 for a single-operator system.
+
+  version:
+    type: integer
+    minimum: 1
+    description: Monotonically increasing. Incremented on every update.
+
+  created:
+    type: string
+    format: date
+
+  updated:
+    type: string
+    format: date
+
+optional:
+  name:
+    type: string
+    description: Operator's chosen display name.
+
+  declared_facts:
+    type: list
+    description: Operator-declared canonical truths about themselves.
+    items:
+      statement: string
+      category:
+        type: string
+        enum: [value, belief, preference, habit, constraint]
+      confidence:
+        type: string
+        enum: [high, medium, low]
+      declared_at:
+        type: string
+        format: date
+
+  values:
+    type: list
+    description: Core values ordered by priority. Slowest-changing layer.
+    items:
+      value: string
+      priority: integer
+      category:
+        type: string
+        enum: [personal, professional, intellectual]
+
+  preferences:
+    type: list
+    description: >
+      Declared or inferred inclinations. Canonical only if source=declared or
+      if an inferred preference has been reviewed and promoted.
+    items:
+      domain: string
+      preference: string
+      context: string
+      source:
+        type: string
+        enum: [declared, inferred]
+      confidence: float
+
+  inferred_attributes:
+    type: list
+    description: >
+      Derived attributes from the learning engine. NOT canonical.
+      Require operator review before promotion to declared_facts or preferences.
+    items:
+      statement: string
+      category:
+        type: string
+        enum: [preference, belief, habit, pattern]
+      confidence: float
+      evidence:
+        type: list
+        items: string  # OBS-NNN IDs
+      reviewed: boolean
+      promoted: boolean
+      inferred_at:
+        type: string
+        format: date

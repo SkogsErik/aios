@@ -8,6 +8,11 @@ Commands:
   aios observe <msg>    Capture a manual observation
   aios patterns         List recent pattern candidates
   aios pattern <id>     Show / accept / reject a pattern
+  aios project ...      Manage projects (Wyrd)
+  aios commit ...       Manage commitments (Wyrd)
+  aios persona ...      Manage persona (Wyrd)
+  aios goal ...         Manage goals (Wyrd)
+  aios focus ...        Manage focus areas (Wyrd)
 """
 
 import argparse
@@ -21,9 +26,13 @@ from pathlib import Path
 from daemon import ExecutiveDaemon
 from daemon_state import PidFile, StateManager
 
-
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 _KNOWLEDGE_DIR = _REPO_ROOT / "platform" / "knowledge"
+
+# Add wyrd/src to path so identity stores are importable
+_WYRD_SRC = _REPO_ROOT / "wyrd" / "src"
+if str(_WYRD_SRC) not in sys.path:
+    sys.path.insert(0, str(_WYRD_SRC))
 
 
 def _get_state_mgr() -> StateManager:
@@ -414,6 +423,128 @@ def cmd_persona_add_fact(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Goal subcommands
+# ---------------------------------------------------------------------------
+
+
+def cmd_goal_add(args: argparse.Namespace) -> None:
+    from goal_store import GoalStore
+    store = GoalStore()
+    target = datetime.date.fromisoformat(args.target_date) if args.target_date else None
+    goal = store.init(
+        title=args.title,
+        type=args.type,
+        horizon=args.horizon,
+        focus_area=args.focus_area,
+        description=args.description,
+        why=args.why,
+        outcome_statement=args.outcome_statement,
+        target_date=target,
+        priority_weight=args.weight,
+    )
+    print(f"Created goal {goal.id}: {goal.title}")
+
+
+def cmd_goal_list(args: argparse.Namespace) -> None:
+    from goal_store import GoalStore
+    store = GoalStore()
+    goals = store.list_active() if args.status == "active" else store.list_all()
+    if not goals:
+        print("No goals found.")
+        return
+    for g in goals:
+        horizon = f"  [{g.horizon}]" if g.horizon else ""
+        area = f"  ({g.focus_area})" if g.focus_area else ""
+        print(f"{g.id}  {g.status:<12} {g.title}{horizon}{area}")
+
+
+def cmd_goal_show(args: argparse.Namespace) -> None:
+    from goal_store import GoalStore
+    store = GoalStore()
+    g = store.get(args.goal_id)
+    if g is None:
+        _print_error(f"Goal {args.goal_id} not found.")
+        sys.exit(1)
+    print(f"ID:          {g.id}")
+    print(f"Title:       {g.title}")
+    print(f"Type:        {g.type}")
+    print(f"Status:      {g.status}")
+    print(f"Horizon:     {g.horizon or '—'}")
+    print(f"Focus area:  {g.focus_area or '—'}")
+    print(f"Target date: {g.target_date or '—'}")
+    print(f"Weight:      {g.priority_weight}")
+    if g.description:
+        print(f"Description: {g.description}")
+    if g.why:
+        print(f"Why:         {g.why}")
+    if g.outcome_statement:
+        print(f"Outcome:     {g.outcome_statement}")
+    if g.projects:
+        print(f"Projects:    {', '.join(g.projects)}")
+
+
+def cmd_goal_update(args: argparse.Namespace) -> None:
+    from goal_store import GoalStore
+    store = GoalStore()
+    if args.status:
+        updated = store.update_status(args.goal_id, args.status)
+        if updated is None:
+            _print_error(f"Goal {args.goal_id} not found.")
+            sys.exit(1)
+        print(f"Updated {args.goal_id} status → {updated.status}")
+    else:
+        print("Nothing to update. Specify --status.")
+
+
+# ---------------------------------------------------------------------------
+# Focus area subcommands
+# ---------------------------------------------------------------------------
+
+
+def cmd_focus_add(args: argparse.Namespace) -> None:
+    from goal_store import FocusAreaStore
+    store = FocusAreaStore()
+    area = store.init(
+        title=args.title,
+        description=args.description,
+        why_it_matters=args.why,
+        attention_budget=args.budget,
+    )
+    print(f"Created focus area {area.id}: {area.title}")
+
+
+def cmd_focus_list(args: argparse.Namespace) -> None:
+    from goal_store import FocusAreaStore
+    store = FocusAreaStore()
+    areas = store.list_active() if args.status == "active" else store.list_all()
+    if not areas:
+        print("No focus areas found.")
+        return
+    for a in areas:
+        budget = f"  [{a.attention_budget}]" if a.attention_budget else ""
+        print(f"{a.id}  {a.status:<8} {a.title}{budget}")
+
+
+def cmd_focus_show(args: argparse.Namespace) -> None:
+    from goal_store import FocusAreaStore
+    store = FocusAreaStore()
+    a = store.get(args.area_id)
+    if a is None:
+        _print_error(f"Focus area {args.area_id} not found.")
+        sys.exit(1)
+    print(f"ID:              {a.id}")
+    print(f"Title:           {a.title}")
+    print(f"Status:          {a.status}")
+    print(f"Attention budget:{a.attention_budget or '—'}")
+    if a.description:
+        print(f"Description:     {a.description}")
+    if a.why_it_matters:
+        print(f"Why it matters:  {a.why_it_matters}")
+    if a.goals:
+        print(f"Goals:           {', '.join(a.goals)}")
+
+
+# ---------------------------------------------------------------------------
 # Main dispatcher
 # ---------------------------------------------------------------------------
 
@@ -523,6 +654,54 @@ def build_parser() -> argparse.ArgumentParser:
     persona_fact.add_argument("--category", choices=["value", "belief", "preference", "habit", "constraint"], default="belief")
     persona_fact.add_argument("--confidence", choices=["high", "medium", "low"], default="medium")
     persona_fact.set_defaults(func=cmd_persona_add_fact)
+
+    # -- goal subcommands -----------------------------------------------------
+    goal = sub.add_parser("goal", help="Manage goals (Wyrd)")
+    goal_sub = goal.add_subparsers(dest="goal_command", required=True)
+
+    goal_add = goal_sub.add_parser("add", help="Add a new goal")
+    goal_add.add_argument("title", help="Goal title")
+    goal_add.add_argument("--type", choices=["outcome", "aspiration", "learning", "habit"], default="outcome")
+    goal_add.add_argument("--horizon", choices=["1-week", "1-month", "3-month", "6-month", "1-year", "multi-year", "ongoing"], default=None)
+    goal_add.add_argument("--focus-area", dest="focus_area", default=None, help="Focus area ID (FCA-xxx)")
+    goal_add.add_argument("--description", default=None)
+    goal_add.add_argument("--why", default=None, help="Personal reason this goal matters")
+    goal_add.add_argument("--outcome", dest="outcome_statement", default=None, help="Measurable outcome statement")
+    goal_add.add_argument("--target-date", dest="target_date", default=None, help="Target date (YYYY-MM-DD)")
+    goal_add.add_argument("--weight", type=float, default=0.5, help="Priority weight (0.0–1.0)")
+    goal_add.set_defaults(func=cmd_goal_add)
+
+    goal_list = goal_sub.add_parser("list", help="List goals")
+    goal_list.add_argument("--status", choices=["active", "all"], default="active")
+    goal_list.set_defaults(func=cmd_goal_list)
+
+    goal_show = goal_sub.add_parser("show", help="Show goal details")
+    goal_show.add_argument("goal_id", help="Goal ID (GL-xxx)")
+    goal_show.set_defaults(func=cmd_goal_show)
+
+    goal_update = goal_sub.add_parser("update", help="Update goal status")
+    goal_update.add_argument("goal_id", help="Goal ID (GL-xxx)")
+    goal_update.add_argument("--status", choices=["draft", "active", "paused", "achieved", "abandoned"], default=None)
+    goal_update.set_defaults(func=cmd_goal_update)
+
+    # -- focus area subcommands -----------------------------------------------
+    focus = sub.add_parser("focus", help="Manage focus areas (Wyrd)")
+    focus_sub = focus.add_subparsers(dest="focus_command", required=True)
+
+    focus_add = focus_sub.add_parser("add", help="Add a new focus area")
+    focus_add.add_argument("title", help="Focus area title")
+    focus_add.add_argument("--description", default=None)
+    focus_add.add_argument("--why", default=None, help="Why this area matters")
+    focus_add.add_argument("--budget", choices=["primary", "secondary", "maintenance", "minimal"], default=None, help="Attention budget")
+    focus_add.set_defaults(func=cmd_focus_add)
+
+    focus_list = focus_sub.add_parser("list", help="List focus areas")
+    focus_list.add_argument("--status", choices=["active", "all"], default="active")
+    focus_list.set_defaults(func=cmd_focus_list)
+
+    focus_show = focus_sub.add_parser("show", help="Show focus area details")
+    focus_show.add_argument("area_id", help="Focus area ID (FCA-xxx)")
+    focus_show.set_defaults(func=cmd_focus_show)
 
     return parser
 

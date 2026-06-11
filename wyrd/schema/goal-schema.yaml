@@ -1,0 +1,71 @@
+# Goal Schema
+#
+# Defined by: ADR-007 (Identity as Domain Object)
+# Subsystem: Wyrd (ADR-012)
+# Capability: CAP-011 (Identity and Persona Management)
+# Storage: platform/knowledge/goals/GL-NNN.yaml
+
+schema_version: "1.0"
+
+required:
+  id:
+    type: string
+    pattern: "^GL-[0-9]{3,}$"
+
+  title:
+    type: string
+
+  type:
+    type: string
+    enum: [outcome, aspiration, learning, habit]
+
+  status:
+    type: string
+    enum: [draft, active, paused, achieved, abandoned]
+
+  created:
+    type: string
+    format: date
+
+  updated:
+    type: string
+    format: date
+
+optional:
+  description:
+    type: string
+
+  horizon:
+    type: string
+    enum: [1-week, 1-month, 3-month, 6-month, 1-year, multi-year, ongoing]
+
+  focus_area:
+    type: string
+    pattern: "^FCA-[0-9]{3,}$"
+
+  outcome_statement:
+    type: string
+    description: Concrete, measurable statement of what achieving this goal looks like.
+
+  why:
+    type: string
+    description: The personal reason this goal matters.
+
+  target_date:
+    type: string
+    format: date
+    nullable: true
+
+  priority_weight:
+    type: float
+    minimum: 0.0
+    maximum: 1.0
+
+  projects:
+    type: list
+    items: string
+    description: PRJ-NNN IDs of projects serving this goal.
+
+  tags:
+    type: list
+    items: string

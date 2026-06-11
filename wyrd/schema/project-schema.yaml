@@ -1,0 +1,108 @@
+# Project Schema
+#
+# Defined by: ADR-007 (Identity as Domain Object), ADR-010 (Runtime Model Evolution)
+# Capability: CAP-013 (Executive Function)
+# Storage: platform/knowledge/projects/PRJ-NNN.yaml
+
+schema_version: "1.0"
+
+required:
+  id:
+    type: string
+    pattern: "^PRJ-[0-9]{3,}$"
+    description: Unique project identifier. Assigned sequentially. Never reused.
+
+  title:
+    type: string
+    description: Human-readable project title.
+
+  type:
+    type: string
+    enum: [project, initiative, maintenance]
+    description: >
+      project     — bounded delivery work
+      initiative  — strategic, change-oriented project
+      maintenance — ongoing operational work with no defined completion
+
+  status:
+    type: string
+    enum: [draft, active, paused, at_risk, stalled, completed, cancelled, abandoned]
+    description: Current lifecycle status of the project.
+
+  created:
+    type: string
+    format: date
+    description: ISO 8601 date the project was created (YYYY-MM-DD).
+
+  updated:
+    type: string
+    format: date
+    description: ISO 8601 date of the last update.
+
+optional:
+  goal:
+    type: string
+    pattern: "^GL-[0-9]{3,}$"
+    description: Goal this project serves (GL-NNN).
+
+  focus_area:
+    type: string
+    pattern: "^FCA-[0-9]{3,}$"
+    description: Focus area this project belongs to (FCA-NNN).
+
+  description:
+    type: string
+    description: One or two sentence description of what this project delivers.
+
+  outcome_statement:
+    type: string
+    description: Concrete, measurable statement of what done looks like.
+
+  timeline:
+    type: object
+    fields:
+      started:
+        type: string
+        format: date
+      target_completion:
+        type: string
+        format: date
+        nullable: true
+      actual_completion:
+        type: string
+        format: date
+        nullable: true
+
+  attention:
+    type: object
+    fields:
+      state:
+        type: string
+        enum: [active, dormant, forgotten, resurfaced]
+      last_touch:
+        type: string
+        format: date
+      days_since_attention:
+        type: integer
+      current_momentum:
+        type: string
+        enum: [high, medium, low, stalled]
+
+  health:
+    type: string
+    enum: [on_track, at_risk, blocked, stalled]
+
+  priority_weight:
+    type: float
+    minimum: 0.0
+    maximum: 1.0
+    description: Operator-declared relative importance (0.0–1.0). Used in priority scoring.
+
+  tags:
+    type: list
+    items: string
+
+  commitments:
+    type: list
+    items: string
+    description: CMT-NNN IDs of commitments related to this project.

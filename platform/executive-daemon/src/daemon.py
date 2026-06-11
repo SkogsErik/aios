@@ -3,6 +3,9 @@ daemon.py — Executive daemon event loop and process lifecycle.
 
 Runs the continuous cycle: capture → store → attention → rules → pattern detection.
 Manages background daemonization via PID file.
+
+AIOS core component — does NOT own identity stores (those live in wyrd/).
+Reads project/commitment data from wyrd/ stores via the shared filesystem contract (ADR-012).
 """
 
 import datetime
@@ -19,12 +22,6 @@ from attention_manager import (
     AttentionManager,
     AttentionState,
     TrackedItem,
-)
-from capture.git_capture import (
-    GitRepoConfig,
-    GitCaptureResult,
-    git_poll,
-    load_git_config,
 )
 from daemon_state import DaemonState, PidFile, RuntimeConfig, StateManager
 from learning_engine import (
@@ -56,6 +53,13 @@ from stores import (
     PatternStore,
     PredictionStore,
 )
+
+# Wyrd imports — identity stores live in wyrd/src/ (ADR-012)
+# wyrd/src/ must be on PYTHONPATH when daemon runs
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_WYRD_SRC = _REPO_ROOT / "wyrd" / "src"
+if str(_WYRD_SRC) not in sys.path:
+    sys.path.insert(0, str(_WYRD_SRC))
 
 logger = logging.getLogger("aios.daemon")
 
@@ -163,7 +167,8 @@ class ExecutiveDaemon:
                 time.sleep(1)
 
     def _run_cycle(self, cycle_num: int) -> None:
-        # 1. Git capture
+        # 1. Git capture (capture module lives in wyrd/src/capture/)
+        from capture.git_capture import git_poll, load_git_config
         git_configs = load_git_config(self._state_mgr._base)
         for gc in git_configs:
             last_hash = self._state.last_git_hashes.get(gc.path)
