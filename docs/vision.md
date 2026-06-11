@@ -2,7 +2,7 @@
 
 **ID:** DOC-001  
 **Status:** Active  
-**Last reviewed:** 2026-06-10
+**Last reviewed:** 2026-06-11
 
 ---
 
@@ -15,6 +15,11 @@ Define the long-term vision for AIOS, establish its design intent, and make expl
 AIOS is a local-first Personal AI Operating System whose primary assets are governed knowledge, traceable decisions, and bounded AI workflows.
 
 Over a multi-year horizon, AIOS is intended to become durable cognitive infrastructure that supports thinking, learning, planning, software development, research, and execution at a personal scale. It will evolve incrementally from a governed documentation and knowledge system, through assisted workflows, toward bounded autonomous operation — with human oversight maintained throughout.
+
+AIOS operates through two distinct but complementary subsystems:
+
+- **AIOS core** — the inference and execution substrate: knowledge platform, model gateway, workflow runtime, rules engine, learning engine, and daemon event loop.
+- **Wyrd** — the operator understanding layer: the persistent, evolving model of who the operator is, what they care about, and how they spend their time. Wyrd holds the persona, observations, projects, commitments, goals, and the review interface through which the operator maintains control over what the system has inferred. The name is deliberate — *wyrd* (Old Norse) means personal fate and the thread of a life. This subsystem earns that weight by being the place where the system genuinely comes to understand its operator over time.
 
 ## Design intent
 
@@ -31,9 +36,10 @@ The strategic objective is to build a personal platform that compounds over time
 
 1. Start with architecture and governance artifacts that survive implementation churn.
 2. Build a knowledge foundation that improves the quality of all future decisions.
-3. Introduce AI assistance only after knowledge and governance structures are in place.
-4. Progress through autonomy stages with explicit controls, not by default.
-5. Maintain the ability to inspect, explain, and override every automated action.
+3. Build Wyrd — a persistent, high-quality model of the operator — grounded in structural intent signals (calendar, declared priorities, reasoned decisions) rather than behavioral telemetry noise.
+4. Introduce AI assistance only after knowledge and governance structures are in place.
+5. Progress through autonomy stages with explicit controls, not by default.
+6. Maintain the ability to inspect, explain, and override every automated action.
 
 AIOS is not optimised for rapid prototyping or demo velocity. It is optimised for long-term durability, correctness, and trust.
 

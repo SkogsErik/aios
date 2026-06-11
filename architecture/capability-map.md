@@ -2,7 +2,7 @@
 
 **ID:** DOC-005  
 **Status:** Active  
-**Last reviewed:** 2026-06-10
+**Last reviewed:** 2026-06-11
 
 ---
 
@@ -11,6 +11,11 @@
 Define the major capability domains of AIOS and map them to the target architecture layers. This document is the primary reference for scoping work, assigning traceability IDs, and evaluating where new capabilities belong.
 
 Capability framing is preferred over premature agent-role framing. Capabilities describe what the system must be able to do; agent roles are a later runtime expression of how capabilities are delivered autonomously.
+
+Capabilities are grouped into two implementation domains:
+
+- **AIOS core** (`platform/executive-daemon/`, `platform/knowledge/`, `platform/model-gateway/`, `platform/workflow-runtime/`) — inference engines, daemon lifecycle, model gateway, workflow runtime
+- **Wyrd** (`wyrd/`) — operator understanding: persona, observations, projects, commitments, goals, capture sources, review interface. See [ADR-012](../adr/0012-wyrd-subsystem-boundary.md).
 
 ---
 
@@ -201,7 +206,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
-### CAP-011 — Identity and Persona Management
+### CAP-011 — Identity and Persona Management *(Wyrd domain)*
 
 **Purpose:** Maintain the persistent representation of the operator, including declared facts, preferences, values, and the canonical/derived split for persona attributes.
 
@@ -219,7 +224,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
-### CAP-012 — Observation and Capture
+### CAP-012 — Observation and Capture *(Wyrd domain)*
 
 **Purpose:** Capture, deduplicate, store, and retain observations from automatic, manual, and scheduled sources. Observations are the raw material for all executive reasoning and reflection.
 
@@ -257,7 +262,7 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
-### CAP-014 — Reflection Cycles
+### CAP-014 — Reflection Cycles *(Wyrd domain)*
 
 **Purpose:** Synthesize observations into insights across daily, weekly, monthly, and quarterly cycles. Generate decisions, update the persona, and refine priorities through structured reflection.
 
@@ -297,6 +302,26 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 
 ---
 
+### CAP-016 — Operator Communication and Review *(Wyrd domain)*
+
+**Purpose:** Provide the dialogue layer through which the operator reviews derived inferences, provides feedback, and maintains sovereignty over what the system has concluded about them. This capability ensures that Wyrd never silently updates the canonical persona.
+
+**Primary layer:** Layer 8 — Experience Layer; `wyrd/src/review/`
+
+**Capabilities:**
+- Surface pattern candidates above confidence threshold for operator review
+- Present evidence for each candidate in a human-readable, inspectable format
+- Accept operator review decisions: accept, reject, snooze, promote to persona, modify
+- Record all review decisions as first-class observations (feeding back into confidence scoring)
+- Generate periodic review digests (daily or weekly cadence)
+- Surface tensions between declared persona values and observed behaviour
+- Enable operator to initiate a review session on demand (not only on daemon schedule)
+- Provide audit trail of all review decisions
+
+**Dependencies:** CAP-015 (Understanding and Inference for candidates), CAP-011 (Persona for promotion target), CAP-012 (Observations for evidence), CAP-006 (Observability for audit trail)
+
+---
+
 ## Capability-to-layer mapping
 
 | Capability | Primary Layer |
@@ -311,11 +336,12 @@ Capability framing is preferred over premature agent-role framing. Capabilities 
 | CAP-008 Evaluation | Layers 3, 4, 6 |
 | CAP-009 Memory and Provenance | Layers 4, 5 |
 | CAP-010 User and Operator Experience | Layer 8 |
-| CAP-011 Identity and Persona Management | Layer 2, Layer 4 |
-| CAP-012 Observation and Capture | Layer 4, Layer 6 |
+| CAP-011 Identity and Persona Management *(Wyrd)* | Layer 2, Layer 4 |
+| CAP-012 Observation and Capture *(Wyrd)* | Layer 4, Layer 6 |
 | CAP-013 Executive Function | Layer 6b |
-| CAP-014 Reflection Cycles | Layer 6b, Layer 4 |
+| CAP-014 Reflection Cycles *(Wyrd)* | Layer 6b, Layer 4 |
 | CAP-015 Understanding and Inference | Layer 6b, Layer 4 |
+| CAP-016 Operator Communication and Review *(Wyrd)* | Layer 8, wyrd/src/review/ |
 
 ## Related artifacts
 

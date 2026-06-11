@@ -2,7 +2,7 @@
 
 **ID:** DOC-008  
 **Status:** Active  
-**Last reviewed:** 2026-06-10
+**Last reviewed:** 2026-06-11
 
 ---
 
@@ -58,6 +58,7 @@ Downward traceability: higher-level artefacts list their known children.
 | Opportunity | `OPP` | `OPP-001` | `OPP-NNN` |
 | Risk | `RSK` | `RSK-001` | `RSK-NNN` |
 | Constraint | `CON` | `CON-001` | `CON-NNN` |
+| Wyrd subsystem artefact | `WYR` | `WYR-001` | `WYR-NNN` |
 
 `NNN` is a zero-padded three-digit integer. IDs are assigned sequentially within each prefix. IDs are never reused.
 
@@ -98,12 +99,18 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | CAP-008 | Evaluation |
 | CAP-009 | Memory and Provenance |
 | CAP-010 | User and Operator Experience |
+| CAP-011 | Identity and Persona Management *(Wyrd domain)* |
+| CAP-012 | Observation and Capture *(Wyrd domain)* |
+| CAP-013 | Executive Function |
+| CAP-014 | Reflection Cycles *(Wyrd domain)* |
+| CAP-015 | Understanding and Inference |
+| CAP-016 | Operator Communication and Review *(Wyrd domain)* |
 
 ### Repositories
 
 | ID | Description |
 |---|---|
-| REP-001 | `SkogsErik/aios` — this repository |
+| REP-001 | `SkogsErik/aios` — this repository (AIOS core + Wyrd subsystem) |
 
 ### Documents
 
@@ -127,6 +134,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-016 | `architecture/identity-centric-pivot-analysis.md` |
 | DOC-017 | `architecture/executive-cognition-analysis.md` |
 | DOC-018 | `architecture/pivot-readiness-assessment.md` |
+| DOC-019 | `wyrd/README.md` *(planned — Phase 6)* |
 
 ### Architecture Decision Records
 
@@ -138,6 +146,12 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | ADR-004 | Identity model (`adr/0004-identity-model.md`) |
 | ADR-005 | Workflow engine technology selection (`adr/0005-workflow-engine-technology.md`) |
 | ADR-006 | Model gateway technology selection (`adr/0006-model-gateway-technology.md`) |
+| ADR-007 | Identity as Domain Object (`adr/0007-identity-as-domain-object.md`) |
+| ADR-008 | Observation Store Architecture (`adr/0008-observation-store-architecture.md`) |
+| ADR-009 | Executive Reasoning Engine Pattern (`adr/0009-executive-reasoning-engine-pattern.md`) |
+| ADR-010 | Runtime Model Evolution (`adr/0010-runtime-model-evolution.md`) |
+| ADR-011 | Learning Architecture (`adr/0011-learning-architecture.md`) |
+| ADR-012 | Wyrd Subsystem Boundary (`adr/0012-wyrd-subsystem-boundary.md`) |
 
 ### Workflows
 

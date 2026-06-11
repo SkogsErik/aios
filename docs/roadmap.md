@@ -2,7 +2,7 @@
 
 **ID:** DOC-002  
 **Status:** Active  
-**Last reviewed:** 2026-06-10
+**Last reviewed:** 2026-06-11
 
 ---
 
@@ -18,9 +18,9 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 | Phase 2 | Architecture Baseline | ✅ Complete |
 | Phase 3 | Knowledge Baseline | ✅ Complete |
 | Phase 4 | Runtime and Workflow Baseline | ✅ Complete |
-| Phase 5 | Identity Foundation | 🔄 Active |
-| Phase 6 | Executive Function | Pending |
-| Phase 7 | AI-Assisted Executive Function | Pending |
+| Phase 5 | Identity Foundation | ✅ Complete |
+| Phase 6 | Wyrd Foundation | 🔄 Active |
+| Phase 7 | AI-Assisted Inference | Pending |
 | Phase 8 | Governed Autonomy | Pending |
 
 ## Phases
@@ -127,7 +127,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 5 — Identity Foundation 🔄 Active
+### Phase 5 — Identity Foundation ✅ Complete
 
 **Objective:** Establish the persistent identity and observation infrastructure that underpins all executive function capabilities.
 
@@ -147,78 +147,79 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - ADR-007 (Identity as Domain Object), ADR-008 (Observation Store Architecture)
 
 **Exit criteria:**
-- Persona store is populated with operator-declared facts.
-- Observations are flowing from at least one automatic capture source.
-- Projects and commitments have defined lifecycles and are queryable.
-- Personal data governance policy is documented and reviewed.
-- ADR-007 and ADR-008 are accepted and referenced in the capability map.
+- ✅ Persona store is populated with operator-declared facts.
+- ✅ Observations are flowing from at least one automatic capture source (git).
+- ✅ Projects and commitments have defined lifecycles and are queryable.
+- ✅ Personal data governance policy is documented and reviewed.
+- ✅ ADR-007 and ADR-008 are accepted and referenced in the capability map.
 
 ---
 
-### Phase 6 — Executive Function
+### Phase 6 — Wyrd Foundation 🔄 Active
 
-**Objective:** Deploy the deterministic executive layer — rules engine, attention manager, and executive daemon — providing continuous attention management and prioritization without AI dependency.
+**Objective:** Establish Wyrd as a named, explicitly bounded subsystem within the AIOS monorepo. Reorganise identity and capture code to reflect the boundary. Build the remaining Phase 5 stores (goals, focus areas). Introduce the first high-quality structural intent capture source (calendar). Build the operator review dialogue.
 
 **Outcomes:**
-- The executive daemon runs continuously, evaluating triggers and managing attention state.
-- The rules engine (Layer 1, deterministic) produces stall alerts, deadline warnings, fragmentation notices, and unblocking notifications.
-- The attention manager tracks active/dormant/forgotten state with decay functions.
-- Projects and commitments drive priority computation through deterministic scoring.
-- All executive function outputs are factual and require no model inference.
+- The `wyrd/` subsystem exists with a clear README and boundary definition.
+- All identity, persona, observation, project, commitment, goal, and focus area code lives under `wyrd/`.
+- AIOS core (`platform/executive-daemon/`) contains only inference engine and daemon lifecycle code.
+- Calendar is integrated as a structural intent capture source, distinct from behavioral telemetry.
+- An operator review interface exists for surfacing pattern candidates and capturing operator feedback.
+- The feedback loop between operator review and confidence scoring is operational.
+- Signal quality is an explicit architectural concern, governed by ADR-012.
 
 **Deliverables:**
-- `platform/executive-daemon/` — persistent daemon with event loop (ADR-010)
-- Rules engine: attention decay, stall detection, deadline scoring, fragmentation detection, dependency traversal
-- Attention manager: state transitions, decay model, trigger evaluation
-- Priority computation: deterministic scoring (urgency × commitment_weight × momentum)
-- CLI: `aios start`, `aios stop`, `aios status`, `aios attention` for operator interaction
-- ADR-009 (Executive Reasoning Engine Pattern), ADR-010 (Runtime Model Evolution)
+- `wyrd/` — new subsystem directory (ADR-012)
+- `wyrd/src/project_store.py` — moved from `platform/executive-daemon/`
+- `wyrd/src/goal_store.py` — GoalStore (GL-NNN) and FocusAreaStore (FCA-NNN), new
+- `wyrd/src/capture/calendar_capture.py` — calendar as structural intent source
+- `wyrd/src/review/` — operator review interface (Markdown digest + CLI submission)
+- `wyrd/schema/` — moved and extended schemas
+- ADR-012: Wyrd Subsystem Boundary (documents the reorganisation and signal quality principle)
+- CAP-016: Operator Communication and Review (new capability)
+- Updated target architecture, capability map, vision, glossary
 
 **Exit criteria:**
-- Executive daemon runs for 7 consecutive days without crash or state loss.
-- Rules engine produces correct stall alerts, deadline warnings, and fragmentation notices.
-- Priority ranking is available on demand and reflects current project/commitment state.
-- Attention state survives daemon restart (checkpoint/restore verified).
-- ADR-009 and ADR-010 are accepted and reflected in the target architecture.
+- `wyrd/` directory exists; `platform/executive-daemon/` contains only engine code.
+- All tests pass after the structural reorganisation.
+- GoalStore and FocusAreaStore are built and queryable via CLI.
+- Calendar capture source is operational (at least one calendar event type captured as an observation).
+- Operator can review pattern candidates, accept or reject them, and feedback is recorded.
+- ADR-012 is accepted and all documentation is consistent with the Wyrd boundary.
 
 ---
 
-### Phase 7 — Understanding and Inference
+### Phase 7 — AI-Assisted Inference
 
-**Objective:** Deploy the learning architecture (ADR-011) — the five-stage inference pipeline that moves the system from remembering to understanding. This enables the system to detect behavioral patterns, reconcile action against values, and build a confidence-weighted model of operator tendencies.
+**Objective:** Activate the scheduled AI inference layer (ADR-009 Layer 2, ADR-011) and complete the feedback loop between operator review and the learning engine. Move the system from pattern detection to genuine operator understanding.
 
 **Outcomes:**
-- The learning engine detects behavioral patterns (preference-behavior divergence, biases, cycles, energy correlations) from observation streams.
-- Detected patterns are scored by a deterministic confidence formula and surfaced as review candidates.
-- Operator feedback on candidates is captured as first-class observations and feeds back into the model.
-- The reconciliation engine compares observed behavior against the canonical persona, flagging tensions for review.
-- Predictions are self-evaluating: when a prediction window closes, the system confirms or refutes the prediction automatically.
-- All learning engine outputs are derived (Principle 7) and require operator review before promoting to canonical persona.
-- Pattern lifecycle (detected → candidate → surfaced → reviewed → active/archived/superseded/promoted) is operational.
+- The learning engine runs on a scheduled cycle, calling the model gateway (ADR-002) to analyse aggregated observations.
+- Detected patterns, contradictions, and predictions are surfaced via the Wyrd review interface (built in Phase 6).
+- Operator feedback flows back into confidence scoring and adjusts pattern type weighting.
+- The reconciliation engine surfaces tensions between declared values and observed behaviour.
+- Predictions self-evaluate when their window closes, and source pattern confidence is updated.
+- No learning engine output modifies the canonical persona without operator review and approval.
 
 **Deliverables:**
-- `platform/executive-daemon/src/learning_engine.py` — five-stage inference pipeline (aggregation, pattern detection, reconciliation, confidence scoring, candidate generation)
-- Inferred Pattern Store (PAT-... schema): lifecycle, confidence, evidence, feedback history
-- Contradiction Store (CTR-... schema): tensions between declared values and observed behavior
-- Prediction Store (PRD-... schema): self-evaluating predictions with outcome windows
-- Pattern review interface: operator reviews, accepts, rejects, modifies, dismisses, or snoozes candidates
-- Feedback integration: operator responses feed back into confidence scoring and pattern type weighting
-- Self-evaluation scheduler: evaluates predictions when their windows close
-- ADR-011 (Learning Architecture)
+- Scheduled AI inference runner: configurable cycle, calls model gateway, governed by ADR-009 Layer 2 rules
+- Feedback integration: operator review responses adjust confidence scores and pattern weighting
+- Self-evaluation scheduler: evaluates predictions against actuals at window close
+- Contradiction surfacing: tensions between persona values and observed behaviour are named and reviewable
+- ADR-013 (if required): Scheduled AI Inference Governance
 
 **Exit criteria:**
-- At least one behavioral pattern type (preference-behavior divergence, bias, cycle, or energy correlation) is detectable and surfaced for review.
-- Operator feedback on at least 5 pattern candidates has been captured and processed.
+- At least one pattern type is detected, surfaced, reviewed by the operator, and confidence updated from feedback.
 - At least one prediction has been generated and self-evaluated (confirmed or refuted).
 - Confidence scoring is deterministic and auditable: any pattern's score is reproducible from the same inputs.
 - No learning engine output has modified the canonical persona without operator approval.
-- ADR-011 is accepted and reflected in the target architecture and capability map.
+- ADR-011 is fully reflected in the target architecture and capability map.
 
 ---
 
 ### Phase 8 — Governed Autonomy
 
-**Objective:** Progress through defined autonomy stages under explicit governance, enabling selected autonomous operations within bounded scope — for both governed workflows (original Phase 7 intent) and executive function (identity context).
+**Objective:** Progress through defined autonomy stages under explicit governance, enabling selected autonomous operations within bounded scope — for both governed workflows and executive function.
 
 **Outcomes:**
 - Autonomous operations are scoped, audited, and reversible.
@@ -257,3 +258,5 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - [ADR-008 — Observation Store Architecture](../adr/0008-observation-store-architecture.md) — foundation for Phase 5
 - [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — design for Phase 6–7
 - [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — infrastructure for Phase 6
+- [ADR-011 — Learning Architecture](../adr/0011-learning-architecture.md) — foundation for Phase 7
+- [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) — defining decision for Phase 6

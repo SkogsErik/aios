@@ -2,7 +2,7 @@
 
 **ID:** DOC-011  
 **Status:** Active  
-**Last reviewed:** 2026-06-10  
+**Last reviewed:** 2026-06-11  
 **Parent:** THEME-001
 
 ---
@@ -209,6 +209,38 @@ A defined, executable sequence of governed steps that realises a capability. Wor
 
 Identifier prefix: `WF`  
 See: [`architecture/target-architecture.md`](../architecture/target-architecture.md) Layer 6
+
+---
+
+### Wyrd
+The operator understanding subsystem of AIOS. Wyrd holds the persistent, evolving model of who the operator is — declared facts, values, preferences, projects, commitments, goals, and the observation stream that feeds the inference pipeline. It also owns all capture sources and the operator review interface.
+
+The name derives from Old Norse *wyrd* (fate, personal narrative, the thread of a life). A subsystem that builds a genuine model of an operator's identity over time earns that name.
+
+Wyrd is a named domain boundary within the AIOS monorepo (`wyrd/`), not a separate system. AIOS core reads from Wyrd's stores through the shared filesystem contract (ADR-003). Wyrd is designed to be extractable as an independent repository once the boundary is stable and extraction triggers are met (see ADR-012).
+
+Contrast with: AIOS core (inference engines, daemon lifecycle, model gateway, workflow runtime)  
+See: [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md); [`wyrd/README.md`](../wyrd/README.md) *(Phase 6)*
+
+---
+
+### Structural Intent Signal
+An observable input that reflects a deliberate commitment of the operator's attention or resources. Structural intent signals are high-quality inputs for operator modeling because they capture *what the operator meant*, not merely *what they did*.
+
+Examples: calendar entries (explicit time commitments), declared priorities, written observations, kept or broken commitments, reasoned decisions with stated rationale.
+
+Contrast with: Behavioral Telemetry  
+See: [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) (signal quality principle)
+
+---
+
+### Behavioral Telemetry
+High-volume, passively collected signals about operator activity — keystroke cadence, scroll patterns, application focus time, URL visit history, mouse activity, idle detection. These signals capture *what the operator did* but not *what they meant*. They require significant inference to extract meaningful signals and carry privacy risks.
+
+Behavioral telemetry is explicitly *not* the foundation of Wyrd's operator model. It may be introduced at a later stage, but only through a separate governance decision. Structural intent signals are preferred at every stage where both are available.
+
+Contrast with: Structural Intent Signal  
+See: [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) (signal quality principle)
 
 ---
 
