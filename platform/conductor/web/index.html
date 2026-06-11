@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIOS Conductor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 12px 20px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 14px; font-weight: 600; color: #aaa; letter-spacing: 0.05em; }
+
+    #session-info {
+      font-size: 12px;
+      color: #555;
+      margin-left: auto;
+    }
+
+    #new-session-btn {
+      font-size: 12px;
+      padding: 4px 10px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      color: #aaa;
+      cursor: pointer;
+    }
+    #new-session-btn:hover { background: #333; }
+
+    #conversation {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .turn {
+      max-width: 780px;
+      width: 100%;
+    }
+    .turn.user { align-self: flex-end; }
+    .turn.assistant { align-self: flex-start; }
+
+    .turn-bubble {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .turn.user .turn-bubble {
+      background: #1e3a5f;
+      color: #c8dff5;
+      border-bottom-right-radius: 2px;
+    }
+
+    .turn.assistant .turn-bubble {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border: 1px solid #2a2a2a;
+      border-bottom-left-radius: 2px;
+    }
+
+    .turn-meta {
+      font-size: 10px;
+      color: #444;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+    .turn.user .turn-meta { text-align: right; }
+
+    .tool-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-right: 6px;
+    }
+    .tool-research  { background: #1a3a1a; color: #6db96d; border: 1px solid #2d5e2d; }
+    .tool-plan      { background: #3a2a1a; color: #d4935a; border: 1px solid #5e3d1a; }
+    .tool-summarise { background: #1a2a3a; color: #5a9fd4; border: 1px solid #1a4060; }
+    .tool-converse  { background: #2a1a3a; color: #a07cc0; border: 1px solid #3d1a5e; }
+
+    #input-area {
+      padding: 16px 20px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #message-input {
+      flex: 1;
+      background: #0f0f0f;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 14px;
+      padding: 10px 14px;
+      resize: none;
+      min-height: 42px;
+      max-height: 200px;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    #message-input:focus { outline: none; border-color: #3a3a3a; }
+    #message-input::placeholder { color: #444; }
+
+    #send-btn {
+      padding: 10px 18px;
+      background: #1e3a5f;
+      border: 1px solid #2a5080;
+      border-radius: 6px;
+      color: #c8dff5;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #send-btn:hover:not(:disabled) { background: #254a73; }
+    #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #status-bar {
+      font-size: 11px;
+      color: #555;
+      padding: 0 4px;
+      min-width: 120px;
+    }
+
+    .thinking { color: #666; font-style: italic; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+
+    #empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #333;
+    }
+    #empty-state .logo { font-size: 32px; font-weight: 700; color: #2a2a2a; letter-spacing: 0.1em; }
+    #empty-state .subtitle { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AIOS · CONDUCTOR</h1>
+    <span id="session-info">no session</span>
+    <button id="new-session-btn" onclick="newSession()">New session</button>
+  </header>
+
+  <div id="conversation">
+    <div id="empty-state">
+      <div class="logo">AIOS</div>
+      <div class="subtitle">Start a session to begin</div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <textarea
+      id="message-input"
+      placeholder="Ask a question, request a plan, or start a conversation…"
+      rows="1"
+      disabled
+    ></textarea>
+    <span id="status-bar"></span>
+    <button id="send-btn" disabled onclick="sendMessage()">Send</button>
+  </div>
+
+  <script>
+    let currentSessionId = null;
+
+    // ---------------------------------------------------------------------------
+    // Session management
+    // ---------------------------------------------------------------------------
+
+    async function newSession() {
+      const title = prompt("Session title (optional):") || null;
+      try {
+        const res = await fetch("/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        });
+        const data = await res.json();
+        currentSessionId = data.session.id;
+        document.getElementById("session-info").textContent = `${currentSessionId}`;
+        document.getElementById("message-input").disabled = false;
+        document.getElementById("send-btn").disabled = false;
+        clearConversation();
+        if (title) appendSystemNote(`Session: ${title}`);
+        document.getElementById("message-input").focus();
+      } catch (e) {
+        alert("Failed to create session: " + e.message);
+      }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Messaging
+    // ---------------------------------------------------------------------------
+
+    async function sendMessage() {
+      const input = document.getElementById("message-input");
+      const message = input.value.trim();
+      if (!message || !currentSessionId) return;
+
+      input.value = "";
+      resizeTextarea(input);
+      appendTurn("user", message, null);
+      setStatus("thinking…", true);
+      setSendEnabled(false);
+
+      try {
+        const res = await fetch(`/sessions/${currentSessionId}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          appendTurn("assistant", `Error: ${err.detail || res.statusText}`, null);
+        } else {
+          const data = await res.json();
+          appendTurn("assistant", data.response, data.intent);
+        }
+      } catch (e) {
+        appendTurn("assistant", `Network error: ${e.message}`, null);
+      } finally {
+        setStatus("", false);
+        setSendEnabled(true);
+        input.focus();
+      }
+    }
+
+    // ---------------------------------------------------------------------------
+    // DOM helpers
+    // ---------------------------------------------------------------------------
+
+    function appendTurn(role, content, tool) {
+      const conv = document.getElementById("conversation");
+      const emptyState = document.getElementById("empty-state");
+      if (emptyState) emptyState.remove();
+
+      const turn = document.createElement("div");
+      turn.className = `turn ${role}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = "turn-bubble";
+      bubble.textContent = content;
+      turn.appendChild(bubble);
+
+      if (role === "assistant" && tool) {
+        const meta = document.createElement("div");
+        meta.className = "turn-meta";
+        const badge = document.createElement("span");
+        badge.className = `tool-badge tool-${tool}`;
+        badge.textContent = tool;
+        meta.appendChild(badge);
+        turn.appendChild(meta);
+      }
+
+      conv.appendChild(turn);
+      conv.scrollTop = conv.scrollHeight;
+    }
+
+    function appendSystemNote(text) {
+      const conv = document.getElementById("conversation");
+      const note = document.createElement("div");
+      note.style.cssText = "text-align:center;font-size:11px;color:#333;padding:4px 0";
+      note.textContent = text;
+      conv.appendChild(note);
+    }
+
+    function clearConversation() {
+      const conv = document.getElementById("conversation");
+      conv.innerHTML = "";
+    }
+
+    function setStatus(text, thinking) {
+      const el = document.getElementById("status-bar");
+      el.textContent = text;
+      el.className = thinking ? "thinking" : "";
+    }
+
+    function setSendEnabled(enabled) {
+      document.getElementById("send-btn").disabled = !enabled;
+    }
+
+    function resizeTextarea(el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    }
+
+    // ---------------------------------------------------------------------------
+    // Keyboard shortcuts
+    // ---------------------------------------------------------------------------
+
+    document.getElementById("message-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.getElementById("message-input").addEventListener("input", (e) => {
+      resizeTextarea(e.target);
+    });
+  </script>
+</body>
+</html>

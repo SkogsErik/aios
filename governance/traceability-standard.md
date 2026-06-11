@@ -59,6 +59,7 @@ Downward traceability: higher-level artefacts list their known children.
 | Risk | `RSK` | `RSK-001` | `RSK-NNN` |
 | Constraint | `CON` | `CON-001` | `CON-NNN` |
 | Wyrd subsystem artefact | `WYR` | `WYR-001` | `WYR-NNN` |
+| Conductor session | `SES` | `SES-2026-0611-001` | `SES-YYYY-MMDD-NNN` |
 
 `NNN` is a zero-padded three-digit integer. IDs are assigned sequentially within each prefix. IDs are never reused.
 
@@ -135,8 +136,8 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-016 | `architecture/identity-centric-pivot-analysis.md` |
 | DOC-017 | `architecture/executive-cognition-analysis.md` |
 | DOC-018 | `architecture/pivot-readiness-assessment.md` |
-| DOC-019 | `wyrd/README.md` *(planned — Phase 6)* |
-| DOC-020 | `platform/conductor/README.md` *(planned — Phase 6)* |
+| DOC-019 | `wyrd/README.md` |
+| DOC-020 | `platform/conductor/README.md` |
 
 ### Architecture Decision Records
 
