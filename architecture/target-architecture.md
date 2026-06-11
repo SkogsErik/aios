@@ -2,7 +2,7 @@
 
 **ID:** DOC-004  
 **Status:** Active  
-**Last reviewed:** 2026-06-10
+**Last reviewed:** 2026-06-11
 
 ---
 
@@ -15,26 +15,31 @@ Define the layered target architecture for AIOS. Each layer has a defined purpos
 AIOS is structured as eight vertical layers. Lower layers provide foundational capabilities consumed by higher layers. Each layer depends only on layers below it. Cross-layer dependencies require explicit documentation.
 
 ```
-┌─────────────────────────────────────────────┐
-│  8. Experience Layer                        │
-├─────────────────────────────────────────────┤
-│  7. Delivery and Automation Platform        │
-├─────────────────────────────────────────────┤
-│  6b. Executive Daemon     │  6a. Workflow   │
-│  (continuous)             │  Executor (disc)│
-├─────────────────────────────────────────────┤
-│  5. Architecture and Governance Repository  │
-├─────────────────────────────────────────────┤
-│  4. Knowledge Platform (incl. Persona,      │
-│     Observation, Project stores)            │
-├─────────────────────────────────────────────┤
-│  3. Model Gateway                           │
-├─────────────────────────────────────────────┤
-│  2. Identity, Security, and Policy          │
-│     (incl. Persona management)              │
-├─────────────────────────────────────────────┤
-│  1. Platform Foundations                    │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  8. Experience Layer                                        │
+│     (Web UI / Conductor interface / CLI / future channels)  │
+├─────────────────────────────────────────────────────────────┤
+│  7. Delivery and Automation Platform                        │
+├──────────────────────────────────┬──────────────────────────┤
+│  6c. Conductor                   │                          │
+│  (interactive, operator-directed)│  6b. Executive Daemon    │
+│                                  │  (continuous)            │
+│                                  ├──────────────────────────┤
+│                                  │  6a. Workflow Executor   │
+│                                  │  (discrete, governed)    │
+├──────────────────────────────────┴──────────────────────────┤
+│  5. Architecture and Governance Repository                  │
+├─────────────────────────────────────────────────────────────┤
+│  4. Knowledge Platform (incl. Persona, Observation,         │
+│     Project, Session stores) + Wyrd subsystem               │
+├─────────────────────────────────────────────────────────────┤
+│  3. Model Gateway                                           │
+├─────────────────────────────────────────────────────────────┤
+│  2. Identity, Security, and Policy                          │
+│     (incl. Persona management)                              │
+├─────────────────────────────────────────────────────────────┤
+│  1. Platform Foundations                                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -195,6 +200,33 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 - No workflow may bypass the model gateway (Layer 3) for model calls
 - Autonomy stage governs which workflow types are permitted to run autonomously
 
+### Sub-layer 6c — Conductor (interactive, operator-directed)
+
+**Purpose:** Provide the real-time conversational interface through which the operator directs the system in natural language. The conductor maintains session context, assembles Wyrd context for every model call, classifies operator intent, and routes to the appropriate tool. It is the interaction layer that makes all other subsystems immediately useful.
+
+**Responsibilities:**
+- Receive operator messages through the local web interface
+- Manage conversation sessions: history, context snapshots, persistence
+- Assemble context from Wyrd stores (persona, active projects, recent observations) for every model call
+- Classify operator intent and route to: research, plan, summarise, or converse tools
+- Call the model gateway (Layer 3) for all AI inference
+- Persist session turns as observations (feeding Wyrd's observation stream)
+- Delegate to governed workflows (Sub-layer 6a) for well-defined subtasks, with operator confirmation
+
+**Non-responsibilities:**
+- Does not manage attention state (delegated to Sub-layer 6b)
+- Does not execute governed workflows autonomously — requires operator confirmation
+- Does not modify canonical persona or project data (operator uses CLI)
+- Does not spawn autonomous sub-agents (Phase 7+)
+
+**Boundaries:**
+- The conductor is optional — the system operates without it (minus interactive capability)
+- All model calls flow through the model gateway; the conductor never calls models directly
+- Session persistence follows ADR-003 (file-based YAML at `platform/knowledge/sessions/`)
+- Binds to `localhost` only; single-operator, no authentication at Phase 6
+
+---
+
 ### Sub-layer 6b — Executive Daemon (continuous executive function + scheduled learning)
 
 **Responsibilities:**
@@ -250,8 +282,9 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 **Purpose:** Provide the operator-facing interfaces for interacting with AIOS across all capability domains.
 
 **Responsibilities:**
+- Conductor web interface: primary real-time interaction surface (served by Sub-layer 6c)
 - Operator interface for knowledge management, workflow oversight, and system configuration
-- Conversational interaction surface (where appropriate, not the primary interface)
+- Conversational interaction surface (conductor provides this)
 - Approval and review interfaces for AI-suggested actions
 - Observability and audit dashboards
 - Notification and escalation delivery
@@ -280,6 +313,7 @@ The following concerns apply across all layers:
 | Backup/restore | Layer 1 (infrastructure); Layers 4 and 5 define policy | Knowledge and governance artefacts are backed up |
 | Executive context | Layer 2 (persona), Layer 4 (stores), Layer 6b (daemon) | Persona, attention, priorities, decisions, and inferred patterns form the executive context available to higher layers |
 | Learning & inference | Layer 6b (learning engine), Layer 4 (pattern stores) | Inferred patterns, contradictions, and predictions are derived assets managed through feedback loops |
+| Interactive assistance | Layer 6c (conductor), Layer 8 (web UI) | Operator-directed tasks, sessions, context-injected model calls; session turns flow back to Layer 4 as observations |
 
 ## Related artifacts
 
@@ -290,5 +324,7 @@ The following concerns apply across all layers:
 - [ADR-007 — Identity as Domain Object](../adr/0007-identity-as-domain-object.md) — Layer 2 persona model update
 - [ADR-008 — Observation Store Architecture](../adr/0008-observation-store-architecture.md) — Layer 4 observation store addition
 - [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — Layer 6b rules engine + AI reasoning design
-- [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — Layer 6 two-runtime model
+- [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — Layer 6 two-runtime model (extended to three by ADR-013)
 - [ADR-011 — Learning Architecture](../adr/0011-learning-architecture.md) — Layer 6b learning engine design
+- [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) — Layer 4 Wyrd domain split
+- [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md) — Layer 6c conductor design

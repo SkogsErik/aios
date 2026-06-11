@@ -155,37 +155,74 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 6 — Wyrd Foundation 🔄 Active
+### Phase 6 — Wyrd Foundation + Conductor MVP 🔄 Active
 
-**Objective:** Establish Wyrd as a named, explicitly bounded subsystem within the AIOS monorepo. Reorganise identity and capture code to reflect the boundary. Build the remaining Phase 5 stores (goals, focus areas). Introduce the first high-quality structural intent capture source (calendar). Build the operator review dialogue.
+**Objective:** Two parallel tracks. Track A closes the Wyrd structural work defined in ADR-012. Track B delivers the Conductor (ADR-013) — the interactive layer that gives AIOS immediate daily utility.
+
+**Why two tracks in one phase:** Wyrd provides the identity context that makes the Conductor genuinely useful. Both are needed for Phase 6 to be complete. The Wyrd structural work is smaller (~days); the Conductor is the primary effort.
+
+---
+
+#### Track A — Wyrd Foundation
+
+**Objective:** Establish `wyrd/` as a named, explicitly bounded subsystem. Reorganise identity and capture code. Build goal and focus area stores.
 
 **Outcomes:**
-- The `wyrd/` subsystem exists with a clear README and boundary definition.
-- All identity, persona, observation, project, commitment, goal, and focus area code lives under `wyrd/`.
-- AIOS core (`platform/executive-daemon/`) contains only inference engine and daemon lifecycle code.
-- Calendar is integrated as a structural intent capture source, distinct from behavioral telemetry.
-- An operator review interface exists for surfacing pattern candidates and capturing operator feedback.
-- The feedback loop between operator review and confidence scoring is operational.
-- Signal quality is an explicit architectural concern, governed by ADR-012.
+- The `wyrd/` subsystem exists with a clear README and boundary definition (ADR-012)
+- All identity, persona, observation, project, commitment, goal, and focus area code lives under `wyrd/`
+- `platform/executive-daemon/` contains only inference engine and daemon lifecycle code
+- GoalStore and FocusAreaStore are operational and CLI-queryable
 
 **Deliverables:**
-- `wyrd/` — new subsystem directory (ADR-012)
+- `wyrd/` directory scaffold and README (DOC-019)
 - `wyrd/src/project_store.py` — moved from `platform/executive-daemon/`
-- `wyrd/src/goal_store.py` — GoalStore (GL-NNN) and FocusAreaStore (FCA-NNN), new
-- `wyrd/src/capture/calendar_capture.py` — calendar as structural intent source
-- `wyrd/src/review/` — operator review interface (Markdown digest + CLI submission)
+- `wyrd/src/goal_store.py` — GoalStore (GL-NNN) and FocusAreaStore (FCA-NNN)
+- `wyrd/src/capture/` — moved from `platform/executive-daemon/`
 - `wyrd/schema/` — moved and extended schemas
-- ADR-012: Wyrd Subsystem Boundary (documents the reorganisation and signal quality principle)
-- CAP-016: Operator Communication and Review (new capability)
-- Updated target architecture, capability map, vision, glossary
+- CLI: `aios goal add/list/show`, `aios focus add/list`
 
-**Exit criteria:**
-- `wyrd/` directory exists; `platform/executive-daemon/` contains only engine code.
-- All tests pass after the structural reorganisation.
-- GoalStore and FocusAreaStore are built and queryable via CLI.
-- Calendar capture source is operational (at least one calendar event type captured as an observation).
-- Operator can review pattern candidates, accept or reject them, and feedback is recorded.
-- ADR-012 is accepted and all documentation is consistent with the Wyrd boundary.
+**Track A exit criteria:**
+- `wyrd/` directory exists; all tests pass after moves
+- GoalStore and FocusAreaStore built and queryable
+- `platform/executive-daemon/` contains no identity store code
+
+---
+
+#### Track B — Conductor MVP
+
+**Objective:** Build a local, conversational interface that the operator can use today to research, plan, and get assistance — with context from Wyrd injected into every call.
+
+**Outcomes:**
+- The operator can open a browser, type a question or instruction, and receive a useful response
+- The conductor has context about the operator's persona, active projects, and recent observations
+- Conductor sessions are persisted as YAML and session turns become observations
+- Research, plan, and summarise tools are functional
+
+**Deliverables:**
+- `platform/conductor/` — new module (DOC-020)
+- `src/session.py` — conversation session management (YAML persistence, ADR-003)
+- `src/context.py` — Wyrd context assembly for every model call
+- `src/dispatch.py` — intent classification and tool routing
+- `src/tools/` — research, plan, summarise tools
+- `src/api.py` — FastAPI HTTP endpoint (localhost)
+- `web/index.html` — minimal chat UI
+- ADR-013 accepted and referenced
+
+**Track B exit criteria:**
+- Conductor HTTP server starts and serves the web UI
+- Operator can send a message and receive a model-backed response
+- Context injection is verified: persona and active projects appear in model call context
+- Session is persisted after conversation
+- Session turns are recorded as observations in the Wyrd store
+- At least 25 tests passing
+
+---
+
+**Phase 6 combined exit criteria:**
+- All Track A and Track B exit criteria met
+- ADR-012 and ADR-013 both accepted
+- All documentation consistent (capability map, target architecture, traceability, glossary)
+- No broken traceability links
 
 ---
 
@@ -259,4 +296,5 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - [ADR-009 — Executive Reasoning Engine Pattern](../adr/0009-executive-reasoning-engine-pattern.md) — design for Phase 6–7
 - [ADR-010 — Runtime Model Evolution](../adr/0010-runtime-model-evolution.md) — infrastructure for Phase 6
 - [ADR-011 — Learning Architecture](../adr/0011-learning-architecture.md) — foundation for Phase 7
-- [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) — defining decision for Phase 6
+- [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) — defining decision for Phase 6 Track A
+- [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md) — defining decision for Phase 6 Track B

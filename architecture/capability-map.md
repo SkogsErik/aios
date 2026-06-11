@@ -16,6 +16,7 @@ Capabilities are grouped into two implementation domains:
 
 - **AIOS core** (`platform/executive-daemon/`, `platform/knowledge/`, `platform/model-gateway/`, `platform/workflow-runtime/`) — inference engines, daemon lifecycle, model gateway, workflow runtime
 - **Wyrd** (`wyrd/`) — operator understanding: persona, observations, projects, commitments, goals, capture sources, review interface. See [ADR-012](../adr/0012-wyrd-subsystem-boundary.md).
+- **Conductor** (`platform/conductor/`) — interactive operator interface: conversational dispatch, session management, tool routing. See [ADR-013](../adr/0013-conductor-agent-design.md).
 
 ---
 
@@ -322,6 +323,32 @@ Capabilities are grouped into two implementation domains:
 
 ---
 
+### CAP-017 — Conductor Agent
+
+**Purpose:** Provide a real-time, conversational interface through which the operator directs the system — asking questions, initiating research, generating plans, and summoning assistance — with full context awareness from the Wyrd subsystem.
+
+**Primary layer:** Layer 6c — Conductor Runtime; Layer 8 — Experience Layer (web UI); `platform/conductor/`
+
+**Capabilities:**
+- Receive operator instructions in natural language through a local web interface
+- Maintain conversation session context across turns (session history, context snapshots)
+- Inject Wyrd context (persona, active projects, recent observations) into every model call
+- Classify operator intent and route to the appropriate tool (research, plan, summarise, converse)
+- Perform research queries through the model gateway with knowledge platform context
+- Generate structured plans from operator-described goals
+- Summarise documents, observations, or conversation history
+- Persist all conversation turns as observations, integrating conductor use into the Wyrd data stream
+- Delegate to governed workflows for well-defined subtasks (with operator confirmation)
+
+**Non-capabilities (Phase 6):**
+- Does not spawn autonomous sub-agent teams (deferred to Phase 7+)
+- Does not modify canonical persona or project data (operator uses CLI for this)
+- Does not execute any action requiring operator confirmation without requesting it
+
+**Dependencies:** CAP-003 (Model Gateway for all AI calls), CAP-001 (Knowledge Platform for retrieval), CAP-011 (Persona for context injection), CAP-012 (Observations to write session turns), CAP-013 (Executive Function for priority context)
+
+---
+
 ## Capability-to-layer mapping
 
 | Capability | Primary Layer |
@@ -342,6 +369,7 @@ Capabilities are grouped into two implementation domains:
 | CAP-014 Reflection Cycles *(Wyrd)* | Layer 6b, Layer 4 |
 | CAP-015 Understanding and Inference | Layer 6b, Layer 4 |
 | CAP-016 Operator Communication and Review *(Wyrd)* | Layer 8, wyrd/src/review/ |
+| CAP-017 Conductor Agent | Layer 6c, Layer 8 |
 
 ## Related artifacts
 

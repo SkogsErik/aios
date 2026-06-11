@@ -105,6 +105,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | CAP-014 | Reflection Cycles *(Wyrd domain)* |
 | CAP-015 | Understanding and Inference |
 | CAP-016 | Operator Communication and Review *(Wyrd domain)* |
+| CAP-017 | Conductor Agent |
 
 ### Repositories
 
@@ -135,6 +136,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-017 | `architecture/executive-cognition-analysis.md` |
 | DOC-018 | `architecture/pivot-readiness-assessment.md` |
 | DOC-019 | `wyrd/README.md` *(planned — Phase 6)* |
+| DOC-020 | `platform/conductor/README.md` *(planned — Phase 6)* |
 
 ### Architecture Decision Records
 
@@ -152,6 +154,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | ADR-010 | Runtime Model Evolution (`adr/0010-runtime-model-evolution.md`) |
 | ADR-011 | Learning Architecture (`adr/0011-learning-architecture.md`) |
 | ADR-012 | Wyrd Subsystem Boundary (`adr/0012-wyrd-subsystem-boundary.md`) |
+| ADR-013 | Conductor Agent Design (`adr/0013-conductor-agent-design.md`) |
 
 ### Workflows
 

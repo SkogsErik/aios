@@ -224,7 +224,22 @@ See: [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.m
 
 ---
 
-### Structural Intent Signal
+### Conductor
+The interactive runtime (`platform/conductor/`) through which the operator communicates with AIOS in natural language. The conductor maintains conversation sessions, injects Wyrd context into every model call, and routes operator intent to the appropriate tool (research, plan, summarise, converse). It is the component that provides daily utility — the operator can ask it questions, request plans, and get assistance without waiting for the Wyrd identity model to mature.
+
+The conductor is **Runtime C** in the three-runtime model:
+- Runtime A: Workflow Executor (governed, bounded, discrete tasks)
+- Runtime B: Executive Daemon (continuous attention, rules, learning)
+- Runtime C: Conductor (interactive, operator-directed, conversational)
+
+See: [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md)
+
+---
+
+### Conversation Session
+A named, persisted conversation with the Conductor. Sessions have a unique ID (`SES-YYYY-MMDD-NNN`), a conversation history, an associated Wyrd context snapshot, and a status. Sessions are stored as YAML files at `platform/knowledge/sessions/` (ADR-003). Each turn in a session is also recorded as an observation (OBS-NNN), making conductor usage part of the Wyrd data stream.
+
+See: [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md); CAP-017
 An observable input that reflects a deliberate commitment of the operator's attention or resources. Structural intent signals are high-quality inputs for operator modeling because they capture *what the operator meant*, not merely *what they did*.
 
 Examples: calendar entries (explicit time commitments), declared priorities, written observations, kept or broken commitments, reasoned decisions with stated rationale.
