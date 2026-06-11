@@ -1,0 +1,30 @@
+# Gateway configuration — AIOS deployment
+#
+# Using local Ollama with qwen2.5:7b-instruct
+# Defined by: ADR-006 — Model Gateway Technology Selection
+
+default_model: "ollama/llama3.2:3b"
+
+providers:
+  ollama:
+    api_base: "http://localhost:11434"
+
+  openai:
+    api_key_env: "OPENAI_API_KEY"
+
+  anthropic:
+    api_key_env: "ANTHROPIC_API_KEY"
+
+rate_limit:
+  requests_per_minute: 60
+
+cost:
+  max_usd_per_day: 5.0
+  block_on_budget_exceeded: false
+
+safety:
+  enabled: true
+
+audit:
+  log_path: "audit/audit.jsonl"
+  log_content: false

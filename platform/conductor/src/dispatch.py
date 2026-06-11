@@ -26,7 +26,7 @@ from typing import Optional
 # Path setup for gateway
 # ---------------------------------------------------------------------------
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _GATEWAY_SRC = _REPO_ROOT / "platform" / "model-gateway" / "src"
 if str(_GATEWAY_SRC) not in sys.path:
     sys.path.insert(0, str(_GATEWAY_SRC))
