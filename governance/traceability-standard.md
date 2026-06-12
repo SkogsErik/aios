@@ -2,7 +2,7 @@
 
 **ID:** DOC-008  
 **Status:** Active  
-**Last reviewed:** 2026-06-11
+**Last reviewed:** 2026-06-12
 
 ---
 
@@ -157,6 +157,9 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | ADR-011 | Learning Architecture (`adr/0011-learning-architecture.md`) |
 | ADR-012 | Wyrd Subsystem Boundary (`adr/0012-wyrd-subsystem-boundary.md`) |
 | ADR-013 | Conductor Agent Design (`adr/0013-conductor-agent-design.md`) |
+| ADR-014 | Agent Tool Interface (`adr/0014-agent-tool-interface.md`) |
+| ADR-015 | Agent Role Model (`adr/0015-agent-role-model.md`) |
+| ADR-016 | Orchestration Pattern (`adr/0016-orchestration-pattern.md`) |
 
 ### Workflows
 

@@ -2,7 +2,7 @@
 
 **ID:** DOC-005  
 **Status:** Active  
-**Last reviewed:** 2026-06-11
+**Last reviewed:** 2026-06-12
 
 ---
 
@@ -340,10 +340,9 @@ Capabilities are grouped into two implementation domains:
 - Persist all conversation turns as observations, integrating conductor use into the Wyrd data stream
 - Delegate to governed workflows for well-defined subtasks (with operator confirmation)
 
-**Non-capabilities (Phase 6):**
-- Does not spawn autonomous sub-agent teams (deferred to Phase 7+)
+**Non-capabilities:**
 - Does not modify canonical persona or project data (operator uses CLI for this)
-- Does not execute any action requiring operator confirmation without requesting it
+- Does not execute multi-agent coordination or autonomous sub-agent teams
 
 **Dependencies:** CAP-003 (Model Gateway for all AI calls), CAP-001 (Knowledge Platform for retrieval), CAP-011 (Persona for context injection), CAP-012 (Observations to write session turns), CAP-013 (Executive Function for priority context)
 

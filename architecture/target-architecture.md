@@ -2,7 +2,7 @@
 
 **ID:** DOC-004  
 **Status:** Active  
-**Last reviewed:** 2026-06-11
+**Last reviewed:** 2026-06-12
 
 ---
 
@@ -217,13 +217,13 @@ AIOS is structured as eight vertical layers. Lower layers provide foundational c
 - Does not manage attention state (delegated to Sub-layer 6b)
 - Does not execute governed workflows autonomously — requires operator confirmation
 - Does not modify canonical persona or project data (operator uses CLI)
-- Does not spawn autonomous sub-agents (Phase 7+)
+- Does not spawn autonomous sub-agents
 
 **Boundaries:**
 - The conductor is optional — the system operates without it (minus interactive capability)
 - All model calls flow through the model gateway; the conductor never calls models directly
 - Session persistence follows ADR-003 (file-based YAML at `platform/knowledge/sessions/`)
-- Binds to `localhost` only; single-operator, no authentication at Phase 6
+- Binds to `localhost` only; single-operator, no authentication
 
 ---
 
