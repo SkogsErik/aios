@@ -6,7 +6,7 @@ Covers: get_by_id, list_assets (with filters), full-text search.
 
 from pathlib import Path
 
-import frontmatter
+from frontmatter_util import dumps as _fm_dumps, load as _fm_load
 import pytest
 
 
@@ -24,9 +24,9 @@ def _ingest(store_dir, tmp_path, name: str = "doc.md", content: str = "Body.",
     dest = ingest_mod.ingest_file(source, domain=domain, title=title or name.replace(".md", "").title(),
                                    tags=tags or [])
     # Override status for test convenience
-    post = frontmatter.load(str(dest))
+    post = _fm_load(str(dest))
     post.metadata["status"] = status
-    dest.write_text(frontmatter.dumps(post), encoding="utf-8")
+    dest.write_text(_fm_dumps(post), encoding="utf-8")
     import index_manager
     index_manager.rebuild_index()
     return post.metadata["id"]

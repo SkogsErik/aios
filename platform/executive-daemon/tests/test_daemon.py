@@ -151,12 +151,13 @@ class TestDaemonLifecycle:
         mgr = StateManager(base_dir=tmp_base)
         mgr.ensure_dirs()
         pid_file = PidFile(path=tmp_base / "already.pid")
-        pid_file.write(999999)
+        pid_file.write(os.getpid())
         daemon = ExecutiveDaemon(state_mgr=mgr, pid_file=pid_file)
         daemon.start()
         assert daemon._running is False
 
     def test_stop_removes_pid(self, tmp_base):
+        tmp_base.mkdir(parents=True, exist_ok=True)
         pid_file = PidFile(path=tmp_base / "cleanup.pid")
         pid_file.write(12345)
         mgr = StateManager(base_dir=tmp_base)

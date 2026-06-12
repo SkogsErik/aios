@@ -431,3 +431,73 @@ class PredictionEvaluator:
             if words & refuted_keywords:
                 return "refuted", -0.2
         return "ambiguous", 0.0
+
+
+class PredictionEvaluationResult(NamedTuple):
+    prediction_id: str
+    outcome: str
+    confidence_delta: float
+
+
+class PredictionScheduler:
+    """Cron-like scheduler that evaluates expired predictions.
+
+    On each tick it queries the PredictionStore for predictions whose
+    ``window_end`` is in the past and whose ``outcome`` is still ``None``,
+    fetches actual observations for that window, runs
+    ``PredictionEvaluator.evaluate``, and persists the result.
+    """
+
+    def __init__(
+        self,
+        prediction_store: object,
+        observation_store: object,
+    ) -> None:
+        self._prediction_store = prediction_store
+        self._observation_store = observation_store
+        self._evaluator = PredictionEvaluator()
+
+    def tick(self) -> list[PredictionEvaluationResult]:
+        expired = self._prediction_store.list_expired()
+        results: list[PredictionEvaluationResult] = []
+
+        for record in expired:
+            pred = Prediction(
+                id=record["id"],
+                target=record["target"],
+                confidence=record["confidence"],
+                source_pattern_id=record.get("source_pattern_id", ""),
+                window_start=datetime.date.fromisoformat(record["window_start"]),
+                window_end=datetime.date.fromisoformat(record["window_end"]),
+                outcome=record.get("outcome"),
+            )
+
+            raw = self._observation_store.observations_in_range(
+                pred.window_start, pred.window_end
+            )
+            observations = [
+                Observation(
+                    id=r.get("id", ""),
+                    timestamp=datetime.datetime.fromisoformat(r.get("timestamp", "")),
+                    type=r.get("type", "action"),
+                    source_mechanism=r.get("source_mechanism", "auto"),
+                    source_component=r.get("source_component", "unknown"),
+                    summary=r.get("summary", ""),
+                    project=r.get("project"),
+                    energy=r.get("energy"),
+                    tags=r.get("tags", []),
+                )
+                for r in raw
+            ]
+            outcome, conf_delta = self._evaluator.evaluate(pred, observations)
+            self._prediction_store.update_outcome(pred.id, outcome)
+
+            results.append(
+                PredictionEvaluationResult(
+                    prediction_id=pred.id,
+                    outcome=outcome,
+                    confidence_delta=conf_delta,
+                )
+            )
+
+        return results

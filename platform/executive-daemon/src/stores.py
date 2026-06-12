@@ -281,6 +281,38 @@ class PredictionStore:
 
 
 # ---------------------------------------------------------------------------
+# Observation store (for prediction self-evaluation)
+# ---------------------------------------------------------------------------
+
+
+class ObservationStore:
+    """Read-only store for observations stored as dated YAML files.
+
+    Layout (same format as daemon._save_observation):
+      {base_dir}/observations/{YYYY}/{MM}/{YYYY-MM-DD}.yaml
+    """
+
+    def __init__(self, base_dir: Path) -> None:
+        self._base = base_dir / "observations"
+
+    def observations_in_range(
+        self,
+        start: datetime.date,
+        end: datetime.date,
+    ) -> list[dict]:
+        results: list[dict] = []
+        current = start
+        while current <= end:
+            path = self._base / str(current.year) / f"{current.month:02d}" / f"{current.isoformat()}.yaml"
+            if path.exists():
+                with open(path) as f:
+                    records = yaml.safe_load(f) or []
+                    results.extend(records)
+            current += datetime.timedelta(days=1)
+        return results
+
+
+# ---------------------------------------------------------------------------
 # Feedback history store
 # ---------------------------------------------------------------------------
 

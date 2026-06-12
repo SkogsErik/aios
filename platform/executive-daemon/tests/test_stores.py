@@ -13,11 +13,13 @@ from learning_engine import (
     PatternStatus,
     PatternType,
     Prediction,
+    PredictionScheduler,
     Tension,
 )
 from stores import (
     ContradictionStore,
     FeedbackHistoryStore,
+    ObservationStore,
     PatternStore,
     PredictionStore,
 )
@@ -183,3 +185,98 @@ class TestFeedbackHistoryStore:
         feedback_store.save({"b": ["2"]})
         loaded = feedback_store.load()
         assert loaded == {"b": ["2"]}
+
+
+# ---------------------------------------------------------------------------
+# ObservationStore
+# ---------------------------------------------------------------------------
+
+
+class TestObservationStore:
+    def test_observations_in_range(self, tmp_path):
+        base = tmp_path / "knowledge"
+        (base / "observations" / "2026" / "06").mkdir(parents=True)
+        obs_file = base / "observations" / "2026" / "06" / "2026-06-10.yaml"
+        obs_file.write_text(
+            "- id: OBS-001\n"
+            "  timestamp: '2026-06-10T10:00:00'\n"
+            "  summary: completed the report\n"
+            "  type: action\n"
+            "  source_mechanism: manual\n"
+            "  source_component: cli\n"
+            "  project: PRJ-001\n"
+            "  energy: high\n"
+            "  tags: []\n"
+        )
+
+        store = ObservationStore(base)
+        results = store.observations_in_range(
+            datetime.date(2026, 6, 9), datetime.date(2026, 6, 11)
+        )
+        assert len(results) == 1
+        assert results[0]["id"] == "OBS-001"
+
+    def test_no_matching_observations(self, tmp_path):
+        base = tmp_path / "empty"
+        base.mkdir()
+        store = ObservationStore(base)
+        results = store.observations_in_range(
+            datetime.date(2026, 6, 1), datetime.date(2026, 6, 5)
+        )
+        assert results == []
+
+
+# ---------------------------------------------------------------------------
+# PredictionScheduler
+# ---------------------------------------------------------------------------
+
+
+class TestPredictionScheduler:
+    def test_tick_no_expired(self, tmp_path):
+        base = tmp_path / "k"
+        base.mkdir()
+
+        pred_store = PredictionStore(base_dir=base / "predictions")
+        obs_store = ObservationStore(base)
+        scheduler = PredictionScheduler(pred_store, obs_store)
+
+        results = scheduler.tick()
+        assert results == []
+
+    def test_tick_evaluates_expired(self, tmp_path):
+        base = tmp_path / "k"
+        obs_dir = base / "observations" / "2026" / "06"
+        obs_dir.mkdir(parents=True)
+        obs_file = obs_dir / "2026-06-10.yaml"
+        obs_file.write_text(
+            "- id: OBS-001\n"
+            "  timestamp: '2026-06-10T10:00:00'\n"
+            "  summary: completed the deployment\n"
+            "  type: action\n"
+            "  source_mechanism: auto\n"
+            "  source_component: workflow\n"
+            "  project: PRJ-001\n"
+            "  energy: high\n"
+            "  tags: []\n"
+        )
+
+        pred_store = PredictionStore(base_dir=base / "predictions")
+        pred_store.save(
+            Prediction(
+                id="PRD-0001",
+                target="Deploy complete by June 10",
+                confidence=0.5,
+                source_pattern_id="PAT-0001",
+                window_start=datetime.date(2026, 6, 9),
+                window_end=datetime.date(2026, 6, 10),
+                outcome=None,
+            )
+        )
+
+        obs_store = ObservationStore(base)
+        scheduler = PredictionScheduler(pred_store, obs_store)
+
+        results = scheduler.tick()
+        assert len(results) == 1
+        assert results[0].prediction_id == "PRD-0001"
+        assert results[0].outcome in ("confirmed", "refuted", "ambiguous")

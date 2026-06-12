@@ -13,7 +13,7 @@ Defined by: ADR-003 — Knowledge Persistence Approach
 from pathlib import Path
 from typing import Optional
 
-import frontmatter
+from frontmatter_util import load as _load_fm
 
 from index_manager import ASSETS_DIR, find_by_id, get_all_entries
 
@@ -69,7 +69,7 @@ def search(query: str, max_results: int = 50) -> list[dict]:
 
     for path in sorted(ASSETS_DIR.rglob("*.md")):
         try:
-            post = frontmatter.load(str(path))
+            post = _load_fm(str(path))
             text = _searchable_text(post.metadata, post.content)
             score = sum(text.count(term) for term in terms)
             if score > 0:
@@ -95,7 +95,7 @@ def search(query: str, max_results: int = 50) -> list[dict]:
 # --- helpers ---
 
 def _load_asset(path: Path) -> dict:
-    post = frontmatter.load(str(path))
+    post = _load_fm(str(path))
     return {
         "metadata": dict(post.metadata),
         "content": post.content,
@@ -129,7 +129,7 @@ def _get_tags_from_entry(entry: dict) -> list[str]:
     if not path.exists():
         return []
     try:
-        post = frontmatter.load(str(path))
+        post = _load_fm(str(path))
         return post.metadata.get("tags", [])
     except Exception:
         return []

@@ -15,8 +15,9 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-import frontmatter
 import yaml
+
+from frontmatter_util import load as _load_fm
 
 STORE_DIR = Path(__file__).parent.parent / "store"
 ASSETS_DIR = STORE_DIR / "assets"
@@ -65,7 +66,7 @@ def rebuild_index() -> int:
     assets = []
     for path in _asset_files():
         try:
-            post = frontmatter.load(str(path))
+            post = _load_fm(str(path))
             meta = post.metadata
             entry = {
                 "id": meta.get("id", ""),
@@ -99,7 +100,7 @@ def next_asset_id() -> str:
     # Also scan asset files so we don't collide if the index is stale
     for path in _asset_files():
         try:
-            post = frontmatter.load(str(path))
+            post = _load_fm(str(path))
             m = ASSET_ID_PATTERN.match(post.metadata.get("id", ""))
             if m:
                 max_n = max(max_n, int(m.group(1)))
@@ -112,7 +113,7 @@ def find_by_id(asset_id: str) -> Optional[Path]:
     """Return the file path for a given asset ID, or None if not found."""
     for path in _asset_files():
         try:
-            post = frontmatter.load(str(path))
+            post = _load_fm(str(path))
             if post.metadata.get("id") == asset_id:
                 return path
         except Exception:

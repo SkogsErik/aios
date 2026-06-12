@@ -23,6 +23,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 from daemon import ExecutiveDaemon
 from daemon_state import PidFile, StateManager
 
@@ -131,7 +133,9 @@ def cmd_patterns(args: argparse.Namespace) -> None:
 
 
 def cmd_pattern_detail(args: argparse.Namespace) -> None:
-    from stores import PatternStore
+    from learning_engine import FeedbackAction, FeedbackProcessor, PatternStatus
+    from stores import FeedbackHistoryStore, PatternStore
+
     store = PatternStore()
     recent = store.list_recent(days=365)
     found = [p for p in recent if p.get("id") == args.pattern_id]
@@ -149,11 +153,45 @@ def cmd_pattern_detail(args: argparse.Namespace) -> None:
         print("Suggestions:")
         for s in p["suggestions"]:
             print(f"  - {s}")
+
     if args.accept:
-        from learning_engine import PatternStatus
-        print("Pattern accepted (logic pending operator review interface)")
+        action = FeedbackAction.ACCEPTED
     elif args.reject:
-        print("Pattern rejected (confidence will decay)")
+        action = FeedbackAction.REJECTED
+    elif args.dismiss:
+        action = FeedbackAction.DISMISSED
+    else:
+        return
+
+    fb_hist = FeedbackHistoryStore()
+    history = fb_hist.load()
+    processor = FeedbackProcessor()
+
+    # Reconstruct a lightweight PatternCandidate from stored dict
+    from learning_engine import PatternType
+    candidate = PatternCandidate(
+        id=p["id"],
+        pattern_type=PatternType(p.get("pattern_type", "behavioral_bias")),
+        confidence=p.get("confidence", 0.0),
+        title=p.get("title", ""),
+        description=p.get("description", ""),
+        evidence=[],
+        suggestions=p.get("suggestions", []),
+        status=PatternStatus(p.get("status", PatternStatus.CANDIDATE.value)),
+        requires_review=p.get("requires_review", True),
+        detection_count=p.get("detection_count", 1),
+    )
+
+    delta, should_archive = processor.process(candidate, action, history)
+    fb_hist.save(history)
+
+    new_confidence = max(0.0, min(1.0, candidate.confidence + delta))
+    new_status = PatternStatus.ARCHIVED if should_archive else PatternStatus.ACTIVE if action == FeedbackAction.ACCEPTED else PatternStatus.CANDIDATE
+
+    print(f"  → Feedback recorded: {action.value}")
+    print(f"  → Confidence delta:  {delta:+.2f} → {new_confidence:.2f}")
+    if should_archive:
+        print(f"  → Pattern auto-archived (3+ rejections in 30 days)")
 
 
 # ---------------------------------------------------------------------------
@@ -545,6 +583,117 @@ def cmd_focus_show(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Contradiction commands
+# ---------------------------------------------------------------------------
+
+
+def cmd_contradictions(args: argparse.Namespace) -> None:
+    from stores import ContradictionStore
+    store = ContradictionStore()
+    active = store.list_active(max_age_days=args.days)
+    if not active:
+        print("No contradictions found.")
+        return
+    for c in active:
+        sev = c.get("severity", "?")
+        sev_mark = {"critical": "🔴", "moderate": "🟡", "minor": "🟢"}.get(sev, "⚪")
+        print(f"  {sev_mark} {c.get('attribute', '?'):30s} declared={c.get('declared_value', 0):.2f}  observed={c.get('observed_value', 0):.2f}  [{sev}]")
+
+
+def cmd_contradiction_show(args: argparse.Namespace) -> None:
+    from stores import ContradictionStore
+    store = ContradictionStore()
+    active = store.list_active(max_age_days=365)
+    found = [c for c in active if c.get("attribute") == args.attribute]
+    if not found:
+        _print_error(f"Contradiction for '{args.attribute}' not found")
+        return
+    c = found[-1]
+    print(f"Attribute:       {c.get('attribute', '?')}")
+    print(f"Declared value:  {c.get('declared_value', 0):.2f}")
+    print(f"Observed value:  {c.get('observed_value', 0):.2f}")
+    print(f"Magnitude:       {c.get('magnitude', 0):.2f}")
+    print(f"Severity:        {c.get('severity', '?')}")
+    print(f"Detected at:     {c.get('detected_at', '?')}")
+
+
+# ---------------------------------------------------------------------------
+# Prediction commands
+# ---------------------------------------------------------------------------
+
+
+def cmd_predictions(args: argparse.Namespace) -> None:
+    from stores import PredictionStore
+    store = PredictionStore()
+    pending = store.list_pending()
+    if not pending:
+        print("No pending predictions.")
+        return
+    for p in pending:
+        outcome = p.get("outcome") or "pending"
+        print(f"  {p['id']:25s} conf={p.get('confidence', 0):.2f}  window={p.get('window_start', '?')}→{p.get('window_end', '?')}  [{outcome}]")
+
+
+def cmd_prediction_evaluate(args: argparse.Namespace) -> None:
+    from learning_engine import Observation, Prediction, PredictionEvaluator
+    from stores import PatternStore, PredictionStore
+
+    pred_store = PredictionStore()
+    expired = pred_store.list_expired()
+    now_date = datetime.date.today()
+
+    if not expired:
+        print("No expired predictions to evaluate.")
+        return
+
+    for p in expired:
+        pred = Prediction(
+            id=p["id"],
+            target=p.get("target", ""),
+            confidence=p.get("confidence", 0.0),
+            source_pattern_id=p.get("source_pattern_id", ""),
+            window_start=datetime.date.fromisoformat(p["window_start"]),
+            window_end=datetime.date.fromisoformat(p["window_end"]),
+            outcome=p.get("outcome"),
+        )
+        # Load observations in the prediction window for evaluation
+        from daemon_state import StateManager
+        state_mgr = StateManager()
+        base = state_mgr._base
+        obs_dir = base / "observations"
+        observations_in_window: list[Observation] = []
+        if obs_dir.exists():
+            for root, _dirs, files in os.walk(obs_dir):
+                for fn in files:
+                    fpath = Path(root) / fn
+                    try:
+                        fdate = datetime.date.fromisoformat(fn.replace(".yaml", ""))
+                    except ValueError:
+                        continue
+                    if pred.window_start <= fdate <= pred.window_end:
+                        with open(fpath) as f:
+                            records = yaml.safe_load(f) or []
+                            for r in records:
+                                observations_in_window.append(
+                                    Observation(
+                                        id=r.get("id", ""),
+                                        timestamp=datetime.datetime.fromisoformat(r.get("timestamp", now_date.isoformat())),
+                                        type=r.get("type", "note"),
+                                        source_mechanism="",
+                                        source_component="",
+                                        summary=r.get("summary", ""),
+                                        project=r.get("project"),
+                                        energy=r.get("energy"),
+                                        tags=r.get("tags", []),
+                                    )
+                                )
+
+        outcome, confidence_delta = PredictionEvaluator.evaluate(pred, observations_in_window)
+        pred_store.update_outcome(pred.id, outcome)
+        print(f"  {pred.id}: {outcome} (source pattern delta: {confidence_delta:+.2f})")
+
+
+# ---------------------------------------------------------------------------
 # Main dispatcher
 # ---------------------------------------------------------------------------
 
@@ -579,6 +728,22 @@ def build_parser() -> argparse.ArgumentParser:
     pattern.add_argument("--reject", action="store_true", help="Reject pattern")
     pattern.add_argument("--dismiss", action="store_true", help="Dismiss pattern")
     pattern.set_defaults(func=cmd_pattern_detail)
+
+    # -- contradiction subcommands --------------------------------------------
+    contradictions = sub.add_parser("contradictions", help="List contradictions/tensions")
+    contradictions.add_argument("--days", type=int, default=90, help="Lookback window")
+    contradictions.set_defaults(func=cmd_contradictions)
+
+    contradiction = sub.add_parser("contradiction", help="Show contradiction details")
+    contradiction.add_argument("attribute", help="Contradiction attribute name")
+    contradiction.set_defaults(func=cmd_contradiction_show)
+
+    # -- prediction subcommands -----------------------------------------------
+    predictions = sub.add_parser("predictions", help="List predictions")
+    predictions.set_defaults(func=cmd_predictions)
+
+    evaluate = sub.add_parser("evaluate", help="Evaluate expired predictions")
+    evaluate.set_defaults(func=cmd_prediction_evaluate)
 
     # -- project subcommands --------------------------------------------------
     proj = sub.add_parser("project", help="Manage projects")

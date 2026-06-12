@@ -14,9 +14,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-import frontmatter
-import yaml
-
+from frontmatter_util import build as _build_fm, parse as _parse_fm
 from index_manager import ASSETS_DIR, _domain_for, add_or_update_entry, find_by_id, next_asset_id
 
 REQUIRED_FIELDS = [
@@ -26,11 +24,10 @@ REQUIRED_FIELDS = [
 
 
 def _slugify(text: str) -> str:
-    """Return a safe, lowercase filename slug from a title string."""
     slug = text.lower()
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
-    return slug[:60]  # cap slug length
+    return slug[:60]
 
 
 def _ensure_required_fields(
@@ -41,10 +38,9 @@ def _ensure_required_fields(
     origin: str,
     tags: list[str],
 ) -> dict:
-    """Return metadata dict with all required fields populated."""
     today = date.today().isoformat()
     meta.setdefault("id", asset_id)
-    meta["title"] = title  # Always use the caller-resolved title (argument > front-matter > filename)
+    meta["title"] = title
     meta.setdefault("status", "draft")
     meta.setdefault("created", today)
     meta["updated"] = today
@@ -75,18 +71,11 @@ def ingest_file(
     origin: str = "manual",
     tags: Optional[list[str]] = None,
 ) -> Path:
-    """
-    Ingest a Markdown file into the knowledge store.
-
-    Returns the path to the created or updated asset file.
-    """
     if not source_path.exists():
         raise FileNotFoundError(f"Source file not found: {source_path}")
 
-    # Parse existing front-matter (if any)
-    post = frontmatter.load(str(source_path))
-    meta = dict(post.metadata)
-    content = post.content
+    raw = source_path.read_text(encoding="utf-8")
+    meta, content = _parse_fm(raw)
 
     # Determine the asset ID
     existing_id = meta.get("id")
@@ -124,9 +113,8 @@ def ingest_file(
             old_path.unlink(missing_ok=True)
 
     # Write the asset file with updated front-matter
-    new_post = frontmatter.Post(content, **meta)
-    with dest_path.open("w", encoding="utf-8") as f:
-        f.write(frontmatter.dumps(new_post))
+    output = _build_fm(meta, content)
+    dest_path.write_text(output, encoding="utf-8")
 
     # Update the index
     index_entry = {

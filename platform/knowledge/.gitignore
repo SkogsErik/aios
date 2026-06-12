@@ -9,3 +9,6 @@ __pycache__/
 # Virtual environments
 .venv/
 venv/
+
+# Runtime session data — not committed
+sessions/

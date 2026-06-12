@@ -32,6 +32,7 @@ from learning_engine import (
     Observation,
     PatternCandidate,
     PatternStatus,
+    PredictionScheduler,
     PreferenceReconciler,
     Tension,
 )
@@ -50,6 +51,7 @@ from rules_engine import (
 )
 from stores import (
     ContradictionStore,
+    ObservationStore,
     PatternStore,
     PredictionStore,
 )
@@ -83,6 +85,9 @@ class ExecutiveDaemon:
         self._behavioral_bias = BehavioralBiasDetector()
         self._pattern_store = PatternStore()
         self._contradiction_store = ContradictionStore()
+        self._prediction_store = PredictionStore()
+        self._observation_store = ObservationStore(self._state_mgr._base)
+        self._prediction_scheduler = PredictionScheduler(self._prediction_store, self._observation_store)
 
         # Runtime state
         self._state = self._state_mgr.load_state()
@@ -167,21 +172,7 @@ class ExecutiveDaemon:
                 time.sleep(1)
 
     def _run_cycle(self, cycle_num: int) -> None:
-        # 1. Git capture (capture module lives in wyrd/src/capture/)
-        from capture.git_capture import git_poll, load_git_config
-        git_configs = load_git_config(self._state_mgr._base)
-        for gc in git_configs:
-            last_hash = self._state.last_git_hashes.get(gc.path)
-            result = git_poll(gc, last_hash, self._obs_counter)
-            for obs in result.observations:
-                self._obs_counter += 1
-                self._save_observation(obs)
-            if result.last_commit and result.last_commit != last_hash:
-                self._state = self._state._replace(
-                    last_git_hashes={**self._state.last_git_hashes, gc.path: result.last_commit}
-                )
-
-        # 2. Attention decay
+        # 1. Attention decay
         stored_items = self._load_tracked_items()
         if stored_items:
             today = datetime.date.today()
@@ -203,6 +194,12 @@ class ExecutiveDaemon:
         # 5. Pattern detection (every SCHEDULE_N cycles)
         if cycle_num > 0 and cycle_num % self._config.schedule_n == 0:
             self._run_pattern_detection(stored_items)
+
+        # 6. Self-evaluation of expired predictions (every SCHEDULE_N cycles)
+        if cycle_num > 0 and cycle_num % self._config.schedule_n == 0:
+            results = self._prediction_scheduler.tick()
+            for r in results:
+                logger.info("Prediction %s evaluated: %s", r.prediction_id, r.outcome)
 
     # -------------------------------------------------------------------
     # Pattern detection

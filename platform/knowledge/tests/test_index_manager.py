@@ -7,7 +7,7 @@ get_all_entries.
 
 from pathlib import Path
 
-import frontmatter
+from frontmatter_util import Post as _FmPost, dumps as _fm_dumps
 import pytest
 
 
@@ -20,8 +20,8 @@ def _write_asset(assets_dir: Path, domain: str, filename: str, meta: dict, conte
     domain_dir = assets_dir / domain
     domain_dir.mkdir(parents=True, exist_ok=True)
     path = domain_dir / filename
-    post = frontmatter.Post(content, **meta)
-    path.write_text(frontmatter.dumps(post), encoding="utf-8")
+    post = _FmPost(content, **meta)
+    path.write_text(_fm_dumps(post), encoding="utf-8")
     return path
 
 
