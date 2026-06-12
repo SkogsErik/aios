@@ -10,15 +10,19 @@ Flow:
     → assemble Wyrd context
     → dispatch (classify intent → route to tool)
     → append turn to session
+    → persist turns as observations
     → return response
 
 Capability: CAP-017 (Conductor — Conversational Interface)
 Defined by: ADR-013 — Conductor Agent Design
 """
 
+import datetime
 import sys
 from pathlib import Path
 from typing import Optional
+
+import yaml
 
 from session import SessionStore, make_turn
 from context import assemble_context, build_stores
@@ -28,7 +32,8 @@ from dispatch import dispatch
 # Path resolution
 # ---------------------------------------------------------------------------
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_OBS_DIR = _REPO_ROOT / "platform" / "knowledge" / "observations"
 
 
 class Conductor:
@@ -51,10 +56,13 @@ class Conductor:
         session_store: Optional[SessionStore] = None,
         stores: Optional[dict] = None,
         gateway=None,
+        obs_dir: Optional[Path] = None,
     ) -> None:
         self._session_store = session_store or SessionStore()
         self._stores = stores if stores is not None else build_stores()
         self._gateway = gateway
+        self._obs_dir = obs_dir or _OBS_DIR
+        self._obs_id_cache: dict[str, int] = {}
 
     # ------------------------------------------------------------------
     # Session management
@@ -135,6 +143,12 @@ class Conductor:
         assistant_turn = make_turn("assistant", result["response"], tool=result["tool"])
         self._session_store.add_turn(session_id, assistant_turn)
 
+        # Record both turns as observations
+        self._save_turn_as_observation(session_id, "user", message)
+        self._save_turn_as_observation(
+            session_id, "assistant", result["response"], tool=result["tool"]
+        )
+
         # Count user turns for turn_index
         turn_index = sum(1 for t in history if t.get("role") == "user")
 
@@ -156,3 +170,62 @@ class Conductor:
             goal_store=self._stores.get("goal_store"),
             focus_store=self._stores.get("focus_store"),
         )
+
+    # ------------------------------------------------------------------
+    # Observation recording
+    # ------------------------------------------------------------------
+
+    def _next_observation_id(self, date_str: str) -> str:
+        """Return the next available OBS-NNN id for the given date string (YYYYMMDD)."""
+        cache_key = f"{date_str}"
+        if cache_key not in self._obs_id_cache:
+            obs_file = self._obs_dir / f"{date_str[:4]}/{date_str[4:6]}/{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}.yaml"
+            max_counter = 0
+            if obs_file.exists():
+                with open(obs_file) as f:
+                    records = yaml.safe_load(f) or []
+                for r in records:
+                    oid = r.get("id", "")
+                    if oid.startswith(f"OBS-{date_str}-"):
+                        try:
+                            counter = int(oid.split("-")[-1])
+                            max_counter = max(max_counter, counter)
+                        except (ValueError, IndexError):
+                            pass
+            self._obs_id_cache[cache_key] = max_counter
+        self._obs_id_cache[cache_key] += 1
+        return f"OBS-{date_str}-{self._obs_id_cache[cache_key]:03d}"
+
+    def _save_turn_as_observation(
+        self,
+        session_id: str,
+        role: str,
+        content: str,
+        tool: Optional[str] = None,
+    ) -> None:
+        now = datetime.datetime.now()
+        date_str = now.strftime("%Y%m%d")
+        obs_file = self._obs_dir / now.strftime("%Y/%m") / f"{now.strftime('%Y-%m-%d')}.yaml"
+        obs_file.parent.mkdir(parents=True, exist_ok=True)
+        summary = content[:200] + ("..." if len(content) > 200 else "")
+        tags = ["conductor", "conversation", role]
+        if tool:
+            tags.append(tool)
+        entry = {
+            "id": self._next_observation_id(date_str),
+            "timestamp": now.isoformat(),
+            "type": "note",
+            "source_mechanism": "manual",
+            "source_component": "conductor",
+            "summary": f"[{session_id}] {role}: {summary}",
+            "project": None,
+            "energy": None,
+            "tags": tags,
+        }
+        records: list[dict] = []
+        if obs_file.exists():
+            with open(obs_file) as f:
+                records = yaml.safe_load(f) or []
+        records.append(entry)
+        with open(obs_file, "w") as f:
+            yaml.dump(records, f, default_flow_style=False, sort_keys=False)

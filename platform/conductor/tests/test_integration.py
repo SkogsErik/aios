@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "platform" / "conductor" / "src"))
@@ -176,6 +177,102 @@ class TestSessionArchive:
 # ===========================================================================
 # Chat endpoint
 # ===========================================================================
+
+
+class TestObservationRecording:
+    """Verify session turns are recorded as observations in the Wyrd store."""
+
+    def test_chat_records_observations(self, tmp_path):
+        sessions_dir = tmp_path / "sessions"
+        obs_dir = tmp_path / "observations"
+        from session import SessionStore
+        from conductor import Conductor
+
+        mock_gw = _MockGateway("test response")
+        conductor = Conductor(
+            session_store=SessionStore(base_dir=sessions_dir),
+            stores={},
+            gateway=mock_gw,
+            obs_dir=obs_dir,
+        )
+
+        result = conductor.chat("new-session", "Hello conductor")
+        session_id = result["session_id"]
+
+        # Verify observation files exist
+        obs_files = list(obs_dir.rglob("*.yaml"))
+        assert len(obs_files) > 0
+
+        # Read observations
+        with open(obs_files[0]) as f:
+            records = yaml.safe_load(f) or []
+        assert len(records) == 2  # user + assistant
+
+        # Verify user observation
+        user_obs = records[0]
+        assert user_obs["type"] == "note"
+        assert user_obs["source_component"] == "conductor"
+        assert "Hello conductor" in user_obs["summary"]
+        assert "user" in user_obs["summary"]
+        assert user_obs["tags"] == ["conductor", "conversation", "user"]
+
+        # Verify assistant observation
+        asst_obs = records[1]
+        assert "test response" in asst_obs["summary"]
+        assert "assistant" in asst_obs["summary"]
+        assert len(asst_obs["tags"]) >= 4  # conductor, conversation, assistant, tool
+
+        # Verify IDs are sequential
+        assert user_obs["id"] != asst_obs["id"]
+        assert user_obs["timestamp"] <= asst_obs["timestamp"]
+
+    def test_observation_ids_are_unique_across_sessions(self, tmp_path):
+        sessions_dir = tmp_path / "sessions"
+        obs_dir = tmp_path / "observations"
+        from session import SessionStore
+        from conductor import Conductor
+
+        mock_gw = _MockGateway("resp")
+        conductor = Conductor(
+            session_store=SessionStore(base_dir=sessions_dir),
+            stores={},
+            gateway=mock_gw,
+            obs_dir=obs_dir,
+        )
+
+        r1 = conductor.chat("s-1", "First")
+        r2 = conductor.chat("s-2", "Second")
+        assert r1["session_id"] != r2["session_id"]
+
+        obs_files = list(obs_dir.rglob("*.yaml"))
+        assert len(obs_files) > 0
+        with open(obs_files[0]) as f:
+            records = yaml.safe_load(f) or []
+        ids = [r["id"] for r in records]
+        assert len(ids) == len(set(ids)), "Observation IDs must be unique"
+
+    def test_observation_summary_truncated(self, tmp_path):
+        sessions_dir = tmp_path / "sessions"
+        obs_dir = tmp_path / "observations"
+        from session import SessionStore
+        from conductor import Conductor
+
+        mock_gw = _MockGateway("x" * 500)
+        conductor = Conductor(
+            session_store=SessionStore(base_dir=sessions_dir),
+            stores={},
+            gateway=mock_gw,
+            obs_dir=obs_dir,
+        )
+
+        conductor.chat("s", "A" * 500)
+        obs_files = list(obs_dir.rglob("*.yaml"))
+        with open(obs_files[0]) as f:
+            records = yaml.safe_load(f) or []
+        user_summary = records[0]["summary"]
+        asst_summary = records[1]["summary"]
+        assert len(user_summary) <= 250  # session_id + role + 200 + "..."
+        assert len(asst_summary) <= 250
 
 
 class TestChat:
