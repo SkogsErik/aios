@@ -13,15 +13,15 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 ## Phase status summary
 
 | Phase | Title | Status |
-|---|---|---|
+|---|---|---|---|
 | Phase 1 | Repository Bootstrap | ✅ Complete |
 | Phase 2 | Architecture Baseline | ✅ Complete |
 | Phase 3 | Knowledge Baseline | ✅ Complete |
 | Phase 4 | Runtime and Workflow Baseline | ✅ Complete |
 | Phase 5 | Identity Foundation | ✅ Complete |
-| Phase 6 | Wyrd Foundation | 🔄 Active |
-| Phase 7 | AI-Assisted Inference | Pending |
-| Phase 8 | Governed Autonomy | Pending |
+| Phase 6 | Wyrd Foundation + Conductor MVP | ✅ Complete |
+| Phase 7 | AI-Assisted Inference | ✅ Complete |
+| Phase 8 | Governed Autonomy | 🔄 Active |
 
 ## Phases
 
@@ -155,7 +155,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 6 — Wyrd Foundation + Conductor MVP 🔄 Active
+### Phase 6 — Wyrd Foundation + Conductor MVP ✅ Complete
 
 **Objective:** Two parallel tracks. Track A closes the Wyrd structural work defined in ADR-012. Track B delivers the Conductor (ADR-013) — the interactive layer that gives AIOS immediate daily utility.
 
@@ -218,7 +218,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-**Phase 6 combined exit criteria:**
+**Phase 6 combined exit criteria (✅ met):**
 - All Track A and Track B exit criteria met
 - ADR-012 and ADR-013 both accepted
 - All documentation consistent (capability map, target architecture, traceability, glossary)
@@ -226,7 +226,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 7 — AI-Assisted Inference
+### Phase 7 — AI-Assisted Inference ✅ Complete
 
 **Objective:** Activate the scheduled AI inference layer (ADR-009 Layer 2, ADR-011) and complete the feedback loop between operator review and the learning engine. Move the system from pattern detection to genuine operator understanding.
 
@@ -239,13 +239,16 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - No learning engine output modifies the canonical persona without operator review and approval.
 
 **Deliverables:**
-- Scheduled AI inference runner: configurable cycle, calls model gateway, governed by ADR-009 Layer 2 rules
-- Feedback integration: operator review responses adjust confidence scores and pattern weighting
-- Self-evaluation scheduler: evaluates predictions against actuals at window close
-- Contradiction surfacing: tensions between persona values and observed behaviour are named and reviewable
-- ADR-013 (if required): Scheduled AI Inference Governance
+- ✅ `platform/executive-daemon/src/learning_engine.py` — `LearningEngine`: aggregated observation analysis, pattern type evaluation, contradiction/prediction generation, feedback confidence adjustment
+- ✅ `platform/executive-daemon/src/daemon.py` — `AiInferenceRunner`: scheduled cycle (configurable interval), calls model gateway, governed by ADR-009 Layer 2 rules
+- ✅ `platform/executive-daemon/src/stores.py` — `PredictionStore`, `FeedbackHistoryStore`, `ObservationStore.observations_in_range()` for temporal queries
+- ✅ `platform/executive-daemon/src/daemon_state.py` — `PredictionScheduler`: tick-based TTL expiry evaluation, self-evaluation at prediction window close
+- ✅ `platform/conductor/src/dispatch.py` — reduced redundancy, shared path resolution
+- ✅ CLI (`platform/executive-daemon/src/cli.py`) — inspect patterns, predictions, feedback per session
+- ✅ 83 new tests across daemon_state, learning_engine, stores modules (123 exec-daemon tests total)
+- ADR-011 is fully reflected in the target architecture and capability map.
 
-**Exit criteria:**
+**Exit criteria (✅ met):**
 - At least one pattern type is detected, surfaced, reviewed by the operator, and confidence updated from feedback.
 - At least one prediction has been generated and self-evaluated (confirmed or refuted).
 - Confidence scoring is deterministic and auditable: any pattern's score is reproducible from the same inputs.
@@ -254,28 +257,146 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 
 ---
 
-### Phase 8 — Governed Autonomy
+### Phase 8 — Governed Autonomy 🔄 Active
 
-**Objective:** Progress through defined autonomy stages under explicit governance, enabling selected autonomous operations within bounded scope — for both governed workflows and executive function.
+**Objective:** Deliver agentic task execution with role-based tool access, governed by operator review at defined checkpoints. Progress through autonomy maturity stages (Stage 1 → Stage 2) under explicit governance.
+
+Phase 8 is structured as six sequential steps, each delivering a discrete capability increment:
+
+---
+
+#### Step 1 — Agent Tool Interface ✅ Complete (ADR-014)
+
+**Objective:** Define and implement a governed tool interface protocol for agent actions.
 
 **Outcomes:**
-- Autonomous operations are scoped, audited, and reversible.
-- The executive reasoning engine may autonomously deprioritize or resurface items within bounded scope and defined thresholds.
-- Governance controls escalate automatically when boundaries are approached.
-- The system maintains a complete audit trail for all autonomous actions in both runtime domains.
+- Four action primitives: read_file, write_file, run_shell, web_search
+- All tool calls flow through a deterministic rules check (ADR-009 two-layer model)
+- Write_file requires operator confirmation gate (Principle 8)
+- All tool actions are logged to observations with source_mechanism: "tool"
 
 **Deliverables:**
+- ✅ `platform/conductor/src/tools/base.py` — `BaseTool` abstract class, `ToolResult` + `ToolCall` dataclasses
+- ✅ `platform/conductor/src/tools/read_file.py` — path-restricted file reader (blocks `../` traversal)
+- ✅ `platform/conductor/src/tools/write_file.py` — path-restricted writer; `REQUIRES_CONFIRMATION = True`
+- ✅ `platform/conductor/src/tools/run_shell.py` — output-only; blocks interactive commands; configurable timeout
+- ✅ `platform/conductor/src/tools/web_search.py` — DuckDuckGo HTML scraper; read-only
+- ✅ `platform/conductor/src/tools/registry.py` — `ToolRegistry` + `ToolExecutor`: param validation (JSON Schema), role enforcement, confirmation gate, audit logging
+- ✅ `platform/conductor/src/tools/execute.py` — single-step execute: model selects tool+params, executor runs it
+- ✅ ADR-014 accepted and referenced
+
+---
+
+#### Step 2 — Single-Agent ReAct Loop ✅ Complete
+
+**Objective:** Implement a governed reasoning-observing-acting loop for single-goal task pursuit.
+
+**Outcomes:**
+- Agent pursues a goal through repeated reasoning and tool use (max 20 steps)
+- Step history is tracked and fed back into each model call
+- Role-based tool descriptions are filtered per agent role
+- Parse errors and tool failures are recovered without crashing the loop
+
+**Deliverables:**
+- ✅ `platform/conductor/src/react.py` — `ReactRunner`: ReAct loop with `_find_json_object()`, `_parse_react_response()`, role-filtered tool descriptions, step history formatting
+- ✅ 12 tests covering tool_call/final/parse_error/failure/unknown action/max steps/role enforcement
+
+---
+
+#### Step 3 — Task State Persistence ✅ Complete
+
+**Objective:** Persist task lifecycle — creation, steps, status transitions, results — as durable derived state.
+
+**Outcomes:**
+- Tasks are stored as YAML-per-entity at `platform/knowledge/tasks/TSK-*.yaml`
+- Each task tracks its goal, role, session_id, status, steps (action + tool + params + observation), and result
+- ID format: `TSK-YYYY-MMDD-NNN` (same pattern as SES, OBS, PRD)
+
+**Deliverables:**
+- ✅ `platform/conductor/src/task_store.py` — `TaskStore`: CRUD, `next_id()`, `add_step()`, `update_status()`, `set_result()`
+- ✅ `make_task()` and `make_step()` factory functions
+- ✅ 21 tests covering ID generation, create/get/list/add_step/update_status/set_result
+
+---
+
+#### Step 4 — Agent Role Definitions ✅ Complete (ADR-015)
+
+**Objective:** Define declarative agent roles with explicit tool access boundaries.
+
+**Outcomes:**
+- Three roles: researcher (read + web), coder (read + write + shell), synthesizer (read only)
+- Role definitions are YAML files — inspectable, versionable, addable without Python changes
+- Tool executor double-checks role allowlist + forbidden list on every call
+
+**Deliverables:**
+- ✅ `platform/conductor/agents/researcher.yaml` — allowed: read_file, web_search
+- ✅ `platform/conductor/agents/coder.yaml` — allowed: read_file, write_file, run_shell
+- ✅ `platform/conductor/agents/synthesizer.yaml` — allowed: read_file only
+- ✅ `platform/conductor/src/agents.py` — `RoleRegistry`: `reload()`, `get()`, `list_roles()`, `validate_tool_access()`
+- ✅ ADR-015 accepted and referenced
+
+---
+
+#### Step 5 — Conductor as Orchestrator ✅ Complete (ADR-016)
+
+**Objective:** Decompose multi-part goals into steps and route each to the appropriate agent role.
+
+**Outcomes:**
+- Complex goals are decomposed into a plan (sequence of step + role pairs)
+- Each step is executed sequentially via the Step 2 ReAct loop
+- If a step fails, the plan enters a blocked state for operator review
+- All step results are accumulated into a final outcome
+
+**Deliverables:**
+- ✅ `platform/conductor/src/orchestrator.py` — `PlanOrchestrator`: `decompose()`, `create_plan()`, `execute_plan()`, `get_plan()`, `list_plans()`
+- ✅ `PlanStore` — YAML-per-entity at `platform/knowledge/plans/PLN-*.yaml`
+- ✅ `conductor.py` — `create_plan()`, `execute_plan()`, `get_plan()`, `list_plans()` methods
+- ✅ ADR-016 accepted and referenced
+- ✅ 21 orchestrator tests + 1 full-pipeline smoke test
+- ✅ 208 total conductor tests, 394 across all modules
+
+---
+
+#### Step 6 — End-to-End Agent Task Execution 🔜 Next
+
+**Objective:** Validate the full agent tool chain against a real model on actual work — not just in tests.
+
+**Outcomes:**
+- A real multi-role task executes end-to-end: researcher gathers sources, coder writes and runs code, synthesizer produces output
+- Context from earlier steps flows into later steps (step result injection)
+- The operator reviews the plan before execution via a basic confirmation gate UI
+- Failure modes with the real model are identified and handled
+
+**Deliverables:**
+- Context passing: prior step results injected into subsequent step's ReAct prompt
+- Confirmation gate wired through `Conductor.chat()` flow so operator approves plan before execution
+- Operator review gate UI in the conductor web interface
+- One real end-to-end task executed and documented (DevOps Journal entry or equivalent)
+
+**Exit criteria:**
+- A multi-role task (researcher → coder → synthesizer) executes to completion with a real model
+- The operator can review and approve a plan before execution
+- Prior step results are visible in later step context
+- All failures are graceful (blocked plan, operator notified)
+- Any model reliability issues with structured output are documented
+
+---
+
+#### Future Phase 8 Steps (Post-Stage-2 Transition)
+
+Once Step 6 exit criteria are met and Stage 2 (AI Contributor) of the autonomy maturity model is validated:
+
 - Autonomy governance controls for executive function (attention, prioritization bounds)
 - Escalation and circuit-breaker policies for executive daemon
 - Autonomous operation audit reporting across both runtimes
+- Delivery automation integration (deferred from original Phase 6)
 - ADRs for each autonomy stage transition in both domains
 
-**Exit criteria:**
+**Exit criteria (Phase 8 overall):**
 - All exit criteria from the autonomy maturity model are satisfied for each stage reached.
 - Executive function autonomy operates within defined bounds without exceeding thresholds.
 - No autonomous operation has caused an uncontrolled, irreversible outcome.
 - Observability and override capability remain intact at all stages.
-- Delivery automation integration (deferred from original Phase 6) may be addressed within this phase.
 
 ---
 
@@ -298,3 +419,6 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 - [ADR-011 — Learning Architecture](../adr/0011-learning-architecture.md) — foundation for Phase 7
 - [ADR-012 — Wyrd Subsystem Boundary](../adr/0012-wyrd-subsystem-boundary.md) — defining decision for Phase 6 Track A
 - [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md) — defining decision for Phase 6 Track B
+- [ADR-014 — Agent Tool Interface](../adr/0014-agent-tool-interface.md) — tool protocol for Phase 8 Step 1
+- [ADR-015 — Agent Role Model](../adr/0015-agent-role-model.md) — role definitions for Phase 8 Step 4
+- [ADR-016 — Orchestration Pattern](../adr/0016-orchestration-pattern.md) — multi-step planning for Phase 8 Step 5
