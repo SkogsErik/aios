@@ -171,4 +171,55 @@ class TestEndToEndReal:
             if res:
                 print(f"    result: {res}")
         assert result.success, f"Web search task failed: {result.error}"
-                
+
+    def test_researcher_to_coder_orchestration(self, tmp_path):
+        """Full multi-role orchestration: researcher web search → coder saves results to a file."""
+        model = "ollama/qwen2.5:7b-instruct"
+        output_path = _REPO_ROOT / "platform" / "conductor" / "tests" / "_e2e_research_output.txt"
+
+        conductor = Conductor(
+            session_store=SessionStore(base_dir=tmp_path / "sessions"),
+            task_store=TaskStore(base_dir=tmp_path / "tasks"),
+            stores={},
+            obs_dir=tmp_path / "observations",
+            model=model,
+        )
+
+        steps = [
+            {
+                "id": "STP-RES",
+                "goal": "Search the web for 'Python programming language history' and summarize who created it and when.",
+                "role": "researcher",
+                "status": "pending", "task_id": None, "result": None, "error": None,
+            },
+            {
+                "id": "STP-COD",
+                "goal": f"Save a summary of Python's history to {output_path}. Content should mention Guido van Rossum and the year Python was first released.",
+                "role": "coder",
+                "status": "pending", "task_id": None, "result": None, "error": None,
+            },
+        ]
+
+        try:
+            plan = conductor.create_plan("Research Python history and save a summary.", steps=steps)
+            print(f"\n[orchestration] plan {plan['id']}: {len(plan['steps'])} steps")
+
+            result = conductor.execute_plan(plan["id"])
+            print(f"\n[orchestration] status={result['status']}")
+            if result.get("error"):
+                print(f"  error: {result['error']}")
+
+            loaded = conductor.get_plan(plan["id"])
+            for s in loaded["steps"]:
+                print(f"  step {s['id']}: status={s['status']}")
+                if s.get("result"):
+                    print(f"    result: {s['result'][:200]}")
+                if s.get("error"):
+                    print(f"    error: {s['error']}")
+
+            assert result["status"] == "completed", f"Plan failed: {result.get('error')}"
+            if output_path.exists():
+                content = output_path.read_text()
+                print(f"\n  output file content: {content[:200]}")
+        finally:
+            output_path.unlink(missing_ok=True)
