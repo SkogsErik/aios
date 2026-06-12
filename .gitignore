@@ -7,3 +7,7 @@ venv/
 *.egg-info/
 dist/
 build/
+
+# Generated test artifacts — plan and task YAML files
+platform/knowledge/plans/PLN-*.yaml
+platform/knowledge/tasks/TSK-*.yaml

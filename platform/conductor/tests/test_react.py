@@ -43,6 +43,12 @@ class TestParseReactResponse:
         assert result is not None
         assert result["answer"] == "All set."
 
+    def test_parses_multiline_answer_with_newlines(self):
+        result = _parse_react_response('{"action": "final", "answer": "Line one\nLine two\nLine three"}')
+        assert result is not None
+        assert result["action"] == "final"
+        assert "Line one" in result["answer"]
+
 
 class TestReactRunner:
     def test_immediate_final_answer(self):

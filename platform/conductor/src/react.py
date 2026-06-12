@@ -80,12 +80,30 @@ def _find_json_object(text: str) -> str | None:
     return None
 
 
+def _escape_newlines_in_strings(text: str) -> str:
+    """Escape literal newlines that appear inside JSON string values."""
+    result: list[str] = []
+    in_string = False
+    for c in text:
+        if c == '"':
+            in_string = not in_string
+        if c == "\n" and in_string:
+            result.append("\\n")
+        else:
+            result.append(c)
+    return "".join(result)
+
+
 def _parse_react_response(text: str) -> dict[str, Any] | None:
     text = text.strip()
     raw = _find_json_object(text)
     if raw:
         try:
             return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            pass
+        try:
+            return json.loads(_escape_newlines_in_strings(raw))
         except (json.JSONDecodeError, TypeError):
             pass
     return None

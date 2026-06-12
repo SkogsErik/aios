@@ -160,14 +160,15 @@ class TestEndToEndReal:
         from react import ReactRunner
         runner = ReactRunner(max_steps=5, model="ollama/qwen2.5:7b-instruct")
         result = runner.run(
-            goal="Search the web for 'Python programming language features' and list the results.",
+            goal="Search the web for 'Python programming language features' and summarize one feature.",
             role="researcher",
         )
-        print(f"\n[web_search] success={result.success}, output={result.output[:500]}")
+        print(f"\n[web_search] success={result.success}, output={result.output[:300]}")
         print("[web_search] step history:")
         for s in runner.step_history:
             print(f"  step {s['step']}: action={s['action']}, tool={s.get('tool', '')}")
-            res = str(s.get('result', ''))[:200]
+            res = str(s.get('result', ''))[:150]
             if res:
                 print(f"    result: {res}")
+        assert result.success, f"Web search task failed: {result.error}"
                 
