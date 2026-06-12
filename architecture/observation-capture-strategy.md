@@ -1,6 +1,6 @@
 # Observation Capture Strategy
 
-**ID:** DOC-008
+**ID:** DOC-021
 **Status:** Active
 **Last reviewed:** 2026-06-10
 **Parent:** ADR-008, CAP-012

@@ -240,6 +240,11 @@ See: [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md)
 A named, persisted conversation with the Conductor. Sessions have a unique ID (`SES-YYYY-MMDD-NNN`), a conversation history, an associated Wyrd context snapshot, and a status. Sessions are stored as YAML files at `platform/knowledge/sessions/` (ADR-003). Each turn in a session is also recorded as an observation (OBS-NNN), making conductor usage part of the Wyrd data stream.
 
 See: [ADR-013 — Conductor Agent Design](../adr/0013-conductor-agent-design.md); CAP-017
+
+---
+
+### Structural Intent Signal
+
 An observable input that reflects a deliberate commitment of the operator's attention or resources. Structural intent signals are high-quality inputs for operator modeling because they capture *what the operator meant*, not merely *what they did*.
 
 Examples: calendar entries (explicit time commitments), declared priorities, written observations, kept or broken commitments, reasoned decisions with stated rationale.

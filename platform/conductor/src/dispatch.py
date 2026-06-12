@@ -26,7 +26,7 @@ from typing import Optional
 # Path setup for gateway
 # ---------------------------------------------------------------------------
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 _GATEWAY_SRC = _REPO_ROOT / "platform" / "model-gateway" / "src"
 if str(_GATEWAY_SRC) not in sys.path:
     sys.path.insert(0, str(_GATEWAY_SRC))
@@ -191,18 +191,21 @@ def dispatch(
     """
     intent = intent_override or classify_intent(message, gateway=gateway)
 
-    if intent == TOOL_RESEARCH:
-        from tools.research import run as research_run
-        response = research_run(message, context_block=context_block, gateway=gateway)
-    elif intent == TOOL_PLAN:
-        from tools.plan import run as plan_run
-        response = plan_run(message, context_block=context_block, gateway=gateway)
-    elif intent == TOOL_SUMMARISE:
-        from tools.summarise import run as summarise_run
-        response = summarise_run(message, context_block=context_block, history=history, gateway=gateway)
-    else:
-        from tools.converse import run as converse_run
-        response = converse_run(message, context_block=context_block, history=history, gateway=gateway)
+    try:
+        if intent == TOOL_RESEARCH:
+            from tools.research import run as research_run
+            response = research_run(message, context_block=context_block, gateway=gateway)
+        elif intent == TOOL_PLAN:
+            from tools.plan import run as plan_run
+            response = plan_run(message, context_block=context_block, gateway=gateway)
+        elif intent == TOOL_SUMMARISE:
+            from tools.summarise import run as summarise_run
+            response = summarise_run(message, context_block=context_block, history=history, gateway=gateway)
+        else:
+            from tools.converse import run as converse_run
+            response = converse_run(message, context_block=context_block, history=history, gateway=gateway)
+    except Exception:
+        response = "I'm sorry, I couldn't reach the AI model gateway. Please check that Ollama (or your configured model provider) is running and try again."
 
     return {
         "intent": intent,

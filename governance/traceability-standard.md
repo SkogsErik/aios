@@ -138,6 +138,7 @@ See [`architecture/capability-map.md`](../architecture/capability-map.md) for th
 | DOC-018 | `architecture/pivot-readiness-assessment.md` |
 | DOC-019 | `wyrd/README.md` |
 | DOC-020 | `platform/conductor/README.md` |
+| DOC-021 | `architecture/observation-capture-strategy.md` |
 
 ### Architecture Decision Records
 
