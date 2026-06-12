@@ -32,8 +32,14 @@ Prior results from earlier plan steps:
 You work in a ReAct loop:
 1. Think about the current situation based on the goal and context.
 2. Decide on the next action: use a tool or provide the final answer.
-3. If using a tool, observe the result and decide the next step.
+3. If using a tool, observe the result.
 4. When the goal is met, provide the final answer to the operator.
+
+Decision rules:
+- After a successful tool call, check if the result contains enough information to achieve the goal.
+- If yes, stop immediately and provide the final answer. Do NOT call additional tools.
+- Only call another tool if the previous tool failed to find the needed information.
+- One successful tool call is sufficient — do not "keep searching" or "verify" with more tools.
 
 Previous steps:
 {step_history}
