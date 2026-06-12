@@ -22,6 +22,7 @@ Define the phased delivery plan for AIOS. Each phase has explicit outcomes, deli
 | Phase 6 | Wyrd Foundation + Conductor MVP | ✅ Complete |
 | Phase 7 | AI-Assisted Inference | ✅ Complete |
 | Phase 8 | Governed Autonomy | ✅ Complete |
+| Phase 9 | Surface and Control | 🔄 Active |
 
 ## Phases
 
@@ -407,6 +408,134 @@ Step 6 exit criteria are met for the core agent pipeline. The following items ar
 
 ---
 
+### Phase 9 — Surface and Control 🔄 Active
+
+**Objective:** Build a unified API surface and web frontend that makes all AIOS subsystems — Wyrd, Conductor, Executive Daemon, Learning Engine — accessible through a single local interface with real-time agent visibility.
+
+**Rationale:** Phases 5–8 delivered four independent subsystems: Wyrd (identity + observation), Conductor (agentic task execution), Executive Daemon (scheduled inference), Learning Engine (pattern detection). Each is operated today through its own CLI or direct Python calls. Phase 9 closes the loop with a unified REST + WebSocket API and a dense, operator-focused single-page application.
+
+Phase 9 is structured as three sequential steps:
+
+---
+
+#### Step 1 — Unified REST API
+
+**Objective:** Extend the Conductor FastAPI server into the system's primary API surface.
+
+**Outcomes:**
+- All Wyrd data is queryable via REST: persona, observations, projects, commitments, goals, focus areas
+- Task and plan state is controllable via REST: create plan, execute, inspect step traces, review blocked tasks
+- Daemon and Learning Engine status is readable via REST: cycle status, pattern candidates, predictions, confidence scores, error log
+- System health is readable via REST: model gateway status, daemon schedule, knowledge store health
+- All endpoints follow consistent conventions (path structure, response format, error shape)
+
+**Deliverables:**
+- `platform/conductor/src/api.py` — extended with route modules: `wyrd/`, `tasks/`, `plans/`, `status/`, `patterns/`, `predictions/`
+- `GET /wyrd/persona` — declared values, facts, preferences, habits
+- `GET /wyrd/observations` — recent observations with filters (time range, energy level, project tag)
+- `GET /wyrd/projects` — active projects with attention state
+- `GET /wyrd/commitments` — upcoming commitments (next 7 days, sorted)
+- `GET /wyrd/goals` — active goals and focus areas
+- `GET /tasks` — task list with status filters
+- `GET /tasks/{id}` — full task with step trace
+- `GET /plans` — plan list with status filters
+- `GET /plans/{id}` — plan with step details
+- `POST /plans` — create plan from goal
+- `POST /plans/{id}/execute` — execute plan
+- `GET /plans/{id}/steps/{step_id}` — single step detail
+- `POST /plans/{id}/steps/{step_id}/approve` — operator review gate
+- `POST /plans/{id}/steps/{step_id}/reject` — operator review gate
+- `GET /status/daemon` — cycle status, last run, next run, statistics
+- `GET /status/gateway` — local/cloud tier availability, last call timestamps
+- `GET /status/knowledge` — asset count, last backup, lifecycle warnings
+- `GET /patterns` — pattern candidates with confidence
+- `POST /patterns/{id}/accept` — accept pattern
+- `POST /patterns/{id}/reject` — reject pattern
+- `GET /predictions` — predictions with evaluation status
+- `GET /status/errors` — last 24h error log
+- Error response shape: `{"error": string, "detail": string | null}` for all 4xx/5xx
+
+**Exit criteria:**
+- All endpoints listed above return correct JSON against real data
+- Every endpoint has at least one integration test
+- curl-based smoke tests exist for all major endpoint groups
+- No endpoint exposes internal implementation details (no file paths, no DB internals)
+
+---
+
+#### Step 2 — Real-Time Event System
+
+**Objective:** Make agent state transitions and daemon cycle events streamable over WebSocket so the frontend receives live updates without polling.
+
+**Outcomes:**
+- ReAct loop emits state events at each step transition (tool_call, final, parse_error, blocked, failed)
+- Plan execution emits events at step boundaries (step_started, step_completed, step_blocked, plan_completed, plan_failed)
+- Daemon cycle emits events (cycle_started, cycle_completed, pattern_detected)
+- Events are structured JSON with type, timestamp, and payload
+- WebSocket endpoint supports topic-based subscriptions
+
+**Deliverables:**
+- `ws://host/ws/events` — primary WebSocket endpoint
+- Subscription message: `{"subscribe": ["tasks", "daemon", "patterns"]}`
+- Event message shape: `{"type": string, "topic": string, "timestamp": string, "payload": {}}`
+- `ReactRunner` modified to yield state updates as async generator (backward-compatible sync wrapper)
+- `PlanOrchestrator.execute_plan()` yields step boundary events
+- Daemon cycle emits events (adapter in `daemon_state.py`)
+- Graceful reconnection: client can resume with last event ID
+- Fallback: if WebSocket unavailable, frontend polls REST at configurable interval
+
+**Exit criteria:**
+- A browser WebSocket client can connect, subscribe to tasks, and receive live agent step events
+- The same client can subscribe to daemon events and receive cycle updates
+- Reconnecting after disconnect resumes from the correct state
+- Unit tests for event emission in ReactRunner and PlanOrchestrator
+
+---
+
+#### Step 3 — Frontend Application
+
+**Objective:** Build the single-page application described in the UI specification.
+
+**Outcomes:**
+- Persistent sidebar showing operator name, values, focus areas, project attention state, commitments, system health
+- Four views fully operational: Conductor (chat + task mode), Orchestration (graph + panel), Wyrd review (patterns, contradictions, predictions, persona), Operational (system status)
+- All views connect to real REST endpoints — no mock data
+- Orchestration graph updates in real time via WebSocket
+- Plan review gate functions: operator sees decomposed plan, approves/rejects before execution
+- Blocked-step review panel functions: operator sees full step trace, accepts/rejects/retries
+
+**Deliverables:**
+- Svelte (or clean TypeScript) SPA served by FastAPI static file mount
+- `web/` directory at repository root (or under `platform/conductor/web/`)
+- Layout shell with persistent sidebar and main content area
+- Sidebar: persona values, focus areas, project attention heat, commitments, health indicators, nav icons
+- Conductor view: chat mode (message history, model tier indicator) and task mode (goal input, plan review gate, live step log, review panel)
+- Orchestration view: node graph (WebSocket-driven, node states per spec), detail panel (expandable step traces, tool I/O, review controls)
+- Wyrd review view: pattern candidate cards with accept/reject, contradiction cards, prediction list, persona document viewer
+- Operational view: daemon status, gateway status, observations, active tasks, knowledge health, error log
+- Dark theme default, light mode optional
+- Responsive, optimised for wide desktop
+- No external fonts, no CDN dependencies, no mock data
+
+**Exit criteria:**
+- All four views render and connect to real backend data
+- WebSocket-driven graph updates in Orchestration view
+- Plan review gate: operator can approve/reject a plan before execution
+- Blocked-step review: operator can accept/reject/retry a blocked step
+- Pattern candidate cards: operator can accept or reject patterns
+- Contradiction cards: operator can read and dismiss
+- Operational view shows live daemon and gateway status
+- No mock data paths remain in the codebase
+- At least one full flow completes in a single session: create plan → approve → watch execution → review result
+
+---
+
+#### Phase 9 Combined Exit Criteria
+
+- All three Step exit criteria met
+- At least one operator session completes the full flow: navigate sidebar → check health → review Wyrd → approve plan → watch agent execute → review step result → accept pattern
+- No errors logged during normal operation that are not explicitly handled
+
 ## Dependencies
 
 - Each phase depends on all prior phases reaching their exit criteria.
@@ -429,3 +558,4 @@ Step 6 exit criteria are met for the core agent pipeline. The following items ar
 - [ADR-014 — Agent Tool Interface](../adr/0014-agent-tool-interface.md) — tool protocol for Phase 8 Step 1
 - [ADR-015 — Agent Role Model](../adr/0015-agent-role-model.md) — role definitions for Phase 8 Step 4
 - [ADR-016 — Orchestration Pattern](../adr/0016-orchestration-pattern.md) — multi-step planning for Phase 8 Step 5
+- [ADR-017 — Unified API Surface](../adr/0017-unified-api-surface.md) — API contract for Phase 9 Step 1
