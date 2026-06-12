@@ -414,6 +414,65 @@ class Prediction(NamedTuple):
     outcome: str | None  # null | confirmed | refuted
 
 
+_PREDICTION_WINDOW_DAYS = 7
+
+
+def generate_predictions(
+    candidates: list[PatternCandidate],
+    prediction_counter: int,
+    window_days: int = _PREDICTION_WINDOW_DAYS,
+) -> tuple[list[Prediction], int]:
+    """Generate predictions from pattern candidates.
+
+    For each candidate above the medium confidence threshold (>= 0.4),
+    a Prediction is created with a configurable future window. The prediction
+    target is derived from the candidate's title and suggestions.
+
+    Returns (predictions, updated_counter).
+    """
+    predictions: list[Prediction] = []
+    today = datetime.date.today()
+    for candidate in candidates:
+        if candidate.confidence < 0.4:
+            continue
+        prediction_counter += 1
+        predictions.append(
+            Prediction(
+                id=f"PRD-{prediction_counter:04d}",
+                target=_derive_target(candidate),
+                confidence=candidate.confidence,
+                source_pattern_id=candidate.id,
+                window_start=today,
+                window_end=today + datetime.timedelta(days=window_days),
+                outcome=None,
+            )
+        )
+    return predictions, prediction_counter
+
+
+def _derive_target(candidate: PatternCandidate) -> str:
+    """Derive a prediction target from a pattern candidate."""
+    if candidate.pattern_type == PatternType.PREFERENCE_DIVERGENCE:
+        attr = candidate.description.split("'")[1] if "'" in candidate.description else "unknown"
+        return f"Will adjust {attr} to reduce divergence within the prediction window"
+    if candidate.pattern_type == PatternType.BEHAVIORAL_BIAS:
+        return "Attention allocation will shift toward declared priorities"
+    if candidate.pattern_type == PatternType.ATTENTION_CLIFF:
+        proj = candidate.title.replace("Attention cliff: ", "")
+        return f"Will resume attention on {proj} within the prediction window"
+    if candidate.pattern_type == PatternType.ENERGY_CORRELATION:
+        return "Activity-energy correlation will persist across the prediction window"
+    if candidate.pattern_type == PatternType.COMPLETION_SIGNATURE:
+        return "New projects will follow the completion signature pattern"
+    if candidate.pattern_type == PatternType.REJECTION_PATTERN:
+        return f"Rejection rate for '{candidate.title}' will remain above threshold"
+    if candidate.pattern_type == PatternType.CYCLICAL_PATTERN:
+        return "Weekly activity patterns will remain consistent within the prediction window"
+    if candidate.pattern_type == PatternType.DELEGATION_PATTERN:
+        return "Delegation imbalance will continue without intervention"
+    return f"Pattern '{candidate.title}' will persist"
+
+
 class PredictionEvaluator:
     @staticmethod
     def evaluate(
@@ -437,6 +496,124 @@ class PredictionEvaluationResult(NamedTuple):
     prediction_id: str
     outcome: str
     confidence_delta: float
+
+
+# ---------------------------------------------------------------------------
+# AI inference runner (Phase 7 — ADR-011 Layer 2)
+# ---------------------------------------------------------------------------
+
+
+class AiInferenceRunner:
+    """Scheduled AI inference for pattern detection and reconciliation.
+
+    Calls the model gateway with aggregated observation windows to detect
+    complex patterns that deterministic rules cannot catch. This is
+    Layer 2 of the executive reasoning engine (ADR-011).
+
+    The runner is scheduled separately from deterministic pattern detection.
+    It degrades gracefully when the model gateway is unavailable.
+    """
+
+    def __init__(self, gateway=None) -> None:
+        self._gateway = gateway
+
+    def analyse(
+        self,
+        windows: list[AggregatedWindow],
+        window_labels: list[str],
+        declared_values: list[DeclaredValue] | None = None,
+    ) -> str:
+        """Analyse aggregated windows and return AI-generated insights.
+
+        Parameters
+        ----------
+        windows : list[AggregatedWindow]
+            Temporal aggregation windows to analyse.
+        window_labels : list[str]
+            Human-readable labels for each window (e.g. "Week 1", "Week 2").
+        declared_values : list[DeclaredValue], optional
+            Declared persona values for reconciliation context.
+
+        Returns
+        -------
+        str
+            AI-generated analysis text, or error message if gateway unavailable.
+        """
+        if len(windows) < 2:
+            return "Insufficient windows for AI inference (need at least 2)."
+
+        prompt = self._build_prompt(windows, window_labels, declared_values)
+        try:
+            response = self._call_gateway(prompt)
+            return response
+        except Exception as e:
+            return f"AI inference skipped: {e}"
+
+    def _build_prompt(
+        self,
+        windows: list[AggregatedWindow],
+        window_labels: list[str],
+        declared_values: list[DeclaredValue] | None,
+    ) -> str:
+        lines = [
+            "You are an AI inference engine for a personal cognitive system called AIOS.",
+            "Analyse the aggregated observation windows below and identify:",
+            "",
+            "1. BEHAVIORAL PATTERNS: Any recurring patterns in activity type, energy levels,",
+            "   project attention, or work habits across windows.",
+            "2. PREFERENCE DIVERGENCE: Where observed behaviour may differ from declared values.",
+            "3. PREDICTIONS: What you predict will happen in the next window based on trends.",
+            "4. ANOMALIES: Any windows that stand out as significantly different.",
+            "",
+            "Be specific and reference actual numbers from the data.",
+            "Format your response as bullet points under each category.",
+            "",
+        ]
+
+        for i, (w, label) in enumerate(zip(windows, window_labels)):
+            lines.append(f"--- {label} ---")
+            lines.append(f"  Total observations: {w.total_observations}")
+            lines.append(f"  By type: {dict(w.by_type)}")
+            lines.append(f"  By project: {dict(w.by_project)}")
+            lines.append(f"  By energy: {dict(w.by_energy)}")
+            if w.deep_work_pct is not None:
+                lines.append(f"  Deep work %: {w.deep_work_pct:.0%}")
+            if w.by_source_component:
+                lines.append(f"  By source: {dict(w.by_source_component)}")
+            if w.by_day_of_week:
+                lines.append(f"  By day of week: {dict(w.by_day_of_week)}")
+            lines.append("")
+
+        if declared_values:
+            lines.append("--- Declared Persona Values ---")
+            for dv in declared_values:
+                lines.append(f"  {dv.attribute}: {dv.value} (weight: {dv.weight})")
+            lines.append("")
+
+        lines.append(
+            "Provide your analysis. For each pattern or divergence, estimate a confidence level (0.0-1.0)."
+        )
+        return "\n".join(lines)
+
+    def _call_gateway(self, prompt: str) -> str:
+        if self._gateway is None:
+            import sys
+            from pathlib import Path
+
+            _ROOT = Path(__file__).resolve().parent.parent.parent.parent
+            _GW_SRC = _ROOT / "platform" / "model-gateway" / "src"
+            if str(_GW_SRC) not in sys.path:
+                sys.path.insert(0, str(_GW_SRC))
+            from gateway import complete as _call
+        else:
+            _call = self._gateway.complete
+
+        response = _call(
+            prompt,
+            caller_id="executive-daemon.learning_engine.ai_inference",
+            context={"purpose": "ai_inference", "windows": len(prompt)},
+        )
+        return response.content
 
 
 class PredictionScheduler:

@@ -1,0 +1,15 @@
+role: researcher
+description: "Gathers information from files and the web. Read-only."
+allowed_tools:
+  - read_file
+  - web_search
+forbidden_actions:
+  - write_file
+  - run_shell
+context_access:
+  - persona
+  - projects
+  - goals
+escalation_triggers:
+  - action: "Operator requested write or shell execution"
+    response: "Researcher role cannot write files or run shell commands. Suggest switching to coder role."

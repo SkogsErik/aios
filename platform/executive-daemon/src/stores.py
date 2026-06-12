@@ -137,6 +137,30 @@ class PatternStore:
                     results.extend(records)
         return results
 
+    def update(self, record: dict) -> bool:
+        for root, _dirs, files in os.walk(self._base):
+            for fn in files:
+                try:
+                    datetime.date.fromisoformat(fn.replace(".yaml", ""))
+                except (ValueError, TypeError):
+                    continue
+                path = Path(root) / fn
+                with open(path) as f:
+                    records = yaml.safe_load(f) or []
+                if not isinstance(records, list):
+                    continue
+                updated = False
+                for r in records:
+                    if r.get("id") == record.get("id"):
+                        r.update(record)
+                        r["updated_at"] = datetime.datetime.now().isoformat()
+                        updated = True
+                if updated:
+                    with open(path, "w") as f:
+                        yaml.dump(records, f, default_flow_style=False, sort_keys=False)
+                    return True
+        return False
+
     def delete_all(self) -> None:
         for root, _dirs, files in os.walk(self._base):
             for fn in files:

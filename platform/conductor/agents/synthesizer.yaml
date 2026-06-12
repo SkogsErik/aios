@@ -1,0 +1,15 @@
+role: synthesizer
+description: "Reads source material and produces structured output. Cannot write to canonical state or run commands."
+allowed_tools:
+  - read_file
+forbidden_actions:
+  - write_file
+  - run_shell
+  - web_search
+context_access:
+  - persona
+  - projects
+  - goals
+escalation_triggers:
+  - action: "Operator requested write, shell execution, or web search"
+    response: "Synthesizer role produces structured output from existing material only. Cannot write files, run commands, or search the web."

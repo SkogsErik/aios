@@ -22,6 +22,7 @@ from learning_engine import (
     PredictionEvaluator,
     PreferenceReconciler,
     Tension,
+    generate_predictions,
 )
 
 
@@ -475,3 +476,85 @@ class TestEndToEndPipeline:
         assert len(candidates) == 1
         assert candidates[0].pattern_type == PatternType.PREFERENCE_DIVERGENCE
         assert candidates[0].requires_review is True
+
+
+@ pytest.fixture()
+def sample_candidates():
+    return [
+        PatternCandidate(
+            id="CND-0001",
+            pattern_type=PatternType.PREFERENCE_DIVERGENCE,
+            confidence=0.65,
+            title="deep_work_weight: declared vs observed divergence",
+            description="Declared 'deep_work_weight' = 0.8, observed = 0.30 (magnitude: 0.50, severity: critical)",
+            evidence=[],
+            suggestions=["Block daily deep work time"],
+            status=PatternStatus.CANDIDATE,
+            requires_review=True,
+            detection_count=1,
+        ),
+        PatternCandidate(
+            id="CND-0002",
+            pattern_type=PatternType.ATTENTION_CLIFF,
+            confidence=0.55,
+            title="Attention cliff: project-xyz",
+            description="project-xyz received attention in window 1 then dropped to near-zero",
+            evidence=[],
+            suggestions=["Review whether project-xyz was completed or abandoned"],
+            status=PatternStatus.CANDIDATE,
+            requires_review=True,
+            detection_count=1,
+        ),
+        PatternCandidate(
+            id="CND-0003",
+            pattern_type=PatternType.BEHAVIORAL_BIAS,
+            confidence=0.35,  # Below threshold -- should be skipped
+            title="Attention bias: work vs life",
+            description="Low confidence pattern, should not generate prediction",
+            evidence=[],
+            suggestions=["Review declared weights"],
+            status=PatternStatus.CANDIDATE,
+            requires_review=True,
+            detection_count=1,
+        ),
+    ]
+
+
+class TestGeneratePredictions:
+    def test_generates_predictions_from_candidates(self, sample_candidates):
+        predictions, counter = generate_predictions(sample_candidates, 0)
+        assert len(predictions) == 2  # CND-0003 is below 0.4 threshold
+        assert counter == 2
+
+    def test_prediction_id_format(self, sample_candidates):
+        predictions, _ = generate_predictions(sample_candidates, 0)
+        for p in predictions:
+            assert p.id.startswith("PRD-")
+
+    def test_prediction_fields(self, sample_candidates):
+        predictions, _ = generate_predictions(sample_candidates, 0)
+        p = predictions[0]
+        assert isinstance(p, Prediction)
+        assert p.confidence == 0.65
+        assert p.source_pattern_id == "CND-0001"
+        assert p.outcome is None
+        assert p.window_start <= p.window_end
+
+    def test_prediction_derives_target(self, sample_candidates):
+        predictions, _ = generate_predictions(sample_candidates, 0)
+        assert "deep_work_weight" in predictions[0].target
+
+    def test_counter_increments_correctly(self, sample_candidates):
+        _, counter = generate_predictions(sample_candidates, 42)
+        assert counter == 44  # Started at 42, 2 predictions generated
+
+    def test_empty_candidates_returns_empty(self):
+        predictions, counter = generate_predictions([], 0)
+        assert predictions == []
+        assert counter == 0
+
+    def test_all_below_threshold_returns_empty(self, sample_candidates):
+        low_conf = [c for c in sample_candidates if c.confidence < 0.4]
+        predictions, counter = generate_predictions(low_conf, 0)
+        assert predictions == []
+        assert counter == 0

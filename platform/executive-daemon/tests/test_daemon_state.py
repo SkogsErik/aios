@@ -33,11 +33,13 @@ class TestStateManager:
             last_git_hashes={"/repo": "abc123"},
             observation_counter=100,
             pattern_counter=5,
+            prediction_counter=3,
         )
         mgr.save_state(state)
         loaded = mgr.load_state()
         assert loaded.cycle_count == 42
         assert loaded.observation_counter == 100
+        assert loaded.prediction_counter == 3
         assert loaded.last_git_hashes["/repo"] == "abc123"
 
     def test_ensure_dirs_creates_directories(self, tmp_base):

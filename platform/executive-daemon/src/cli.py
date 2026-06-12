@@ -188,6 +188,13 @@ def cmd_pattern_detail(args: argparse.Namespace) -> None:
     new_confidence = max(0.0, min(1.0, candidate.confidence + delta))
     new_status = PatternStatus.ARCHIVED if should_archive else PatternStatus.ACTIVE if action == FeedbackAction.ACCEPTED else PatternStatus.CANDIDATE
 
+    # Persist updated confidence and status
+    store.update({
+        "id": p["id"],
+        "confidence": new_confidence,
+        "status": new_status.value,
+    })
+
     print(f"  → Feedback recorded: {action.value}")
     print(f"  → Confidence delta:  {delta:+.2f} → {new_confidence:.2f}")
     if should_archive:

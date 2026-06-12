@@ -26,6 +26,7 @@ from attention_manager import (
 from daemon_state import DaemonState, PidFile, RuntimeConfig, StateManager
 from learning_engine import (
     AggregatedWindow,
+    AiInferenceRunner,
     ConfidenceScorer,
     DeclaredValue,
     LearningEngine,
@@ -35,6 +36,7 @@ from learning_engine import (
     PredictionScheduler,
     PreferenceReconciler,
     Tension,
+    generate_predictions,
 )
 from pattern_detector import (
     BehavioralBiasDetector,
@@ -51,6 +53,7 @@ from rules_engine import (
 )
 from stores import (
     ContradictionStore,
+    FeedbackHistoryStore,
     ObservationStore,
     PatternStore,
     PredictionStore,
@@ -87,12 +90,15 @@ class ExecutiveDaemon:
         self._contradiction_store = ContradictionStore()
         self._prediction_store = PredictionStore()
         self._observation_store = ObservationStore(self._state_mgr._base)
+        self._feedback_history_store = FeedbackHistoryStore()
+        self._ai_inference = AiInferenceRunner()
         self._prediction_scheduler = PredictionScheduler(self._prediction_store, self._observation_store)
 
         # Runtime state
         self._state = self._state_mgr.load_state()
         self._cycle_count = self._state.cycle_count
         self._obs_counter = self._state.observation_counter
+        self._pred_counter = self._state.prediction_counter
 
     # -------------------------------------------------------------------
     # Lifecycle
@@ -201,6 +207,10 @@ class ExecutiveDaemon:
             for r in results:
                 logger.info("Prediction %s evaluated: %s", r.prediction_id, r.outcome)
 
+        # 7. AI inference (every SCHEDULE_N cycles, after deterministic patterns)
+        if cycle_num > 0 and cycle_num % self._config.schedule_n == 0:
+            self._run_ai_inference()
+
     # -------------------------------------------------------------------
     # Pattern detection
     # -------------------------------------------------------------------
@@ -216,6 +226,8 @@ class ExecutiveDaemon:
             return
 
         pattern_counter = self._state.pattern_counter
+        pred_counter = self._pred_counter
+        all_candidates: list[PatternCandidate] = []
 
         # Preference reconciliation (requires declared values)
         declared = self._load_declared_values()
@@ -224,11 +236,13 @@ class ExecutiveDaemon:
             tensions = self._learning_engine.reconcile(declared, aggregated)
             for t in tensions:
                 self._contradiction_store.save(t)
+            feedback_history = self._load_feedback_history()
             candidates, pattern_counter = self._learning_engine.generate_candidates(
-                tensions, windows, {}, pattern_counter
+                tensions, windows, feedback_history, pattern_counter
             )
             for c in candidates:
                 self._pattern_store.save(c)
+                all_candidates.append(c)
                 logger.info("PATTERN: %s (confidence=%.2f)", c.title, c.confidence)
 
         # Behavioral bias (works without declared values)
@@ -237,10 +251,37 @@ class ExecutiveDaemon:
             bias_results = self._behavioral_bias.detect(windows, pairs, pattern_counter)
             for c in bias_results:
                 self._pattern_store.save(c)
+                all_candidates.append(c)
                 pattern_counter += 1
                 logger.info("PATTERN: %s (confidence=%.2f)", c.title, c.confidence)
 
-        self._state = self._state._replace(pattern_counter=pattern_counter)
+        # Generate predictions from detected patterns
+        if all_candidates:
+            predictions, pred_counter = generate_predictions(all_candidates, pred_counter)
+            for p in predictions:
+                self._prediction_store.save(p)
+                logger.info("PREDICTION: %s (confidence=%.2f)", p.target, p.confidence)
+
+        self._state = self._state._replace(pattern_counter=pattern_counter, prediction_counter=pred_counter)
+        self._pred_counter = pred_counter
+
+    def _run_ai_inference(self) -> None:
+        recent_obs = self._load_recent_observations()
+        if len(recent_obs) < 10:
+            logger.debug("AI inference skipped: only %d observations", len(recent_obs))
+            return
+        windows = self._build_windows(recent_obs)
+        if len(windows) < 2:
+            logger.debug("AI inference skipped: only %d windows", len(windows))
+            return
+
+        labels = [f"Window {i + 1}" for i in range(len(windows))]
+        declared = self._load_declared_values()
+        result = self._ai_inference.analyse(windows, labels, declared)
+        if result.startswith("AI inference skipped:"):
+            logger.info("AI inference unavailable: %s", result)
+        else:
+            logger.info("AI inference result (%d chars): %s", len(result), result[:200])
 
     # -------------------------------------------------------------------
     # Persistence helpers
@@ -295,6 +336,15 @@ class ExecutiveDaemon:
                     weight=entry.get("weight", 0.5),
                 )
             )
+        return result
+
+    def _load_feedback_history(self) -> dict[str, tuple[int, int]]:
+        raw = self._feedback_history_store.load()
+        result: dict[str, tuple[int, int]] = {}
+        for pattern_type, dates in raw.items():
+            accepts = sum(1 for d in dates if isinstance(d, str) and d.startswith("accept"))
+            rejects = sum(1 for d in dates if isinstance(d, str) and d.startswith("reject"))
+            result[pattern_type] = (accepts, rejects)
         return result
 
     def _load_recent_observations(self) -> list[Observation]:
@@ -358,5 +408,6 @@ class ExecutiveDaemon:
             last_git_hashes=self._state.last_git_hashes,
             observation_counter=self._obs_counter,
             pattern_counter=self._state.pattern_counter,
+            prediction_counter=self._pred_counter,
         )
         self._state_mgr.save_state(state)

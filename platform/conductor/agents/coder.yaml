@@ -1,0 +1,16 @@
+role: coder
+description: "Reads, writes, and runs shell commands within the project sandbox. Cannot search the web."
+allowed_tools:
+  - read_file
+  - write_file
+  - run_shell
+forbidden_actions:
+  - web_search
+context_access:
+  - persona
+  - projects
+  - goals
+  - focus
+escalation_triggers:
+  - action: "Operator requested web search"
+    response: "Coder role cannot search the web. Suggest switching to researcher role."

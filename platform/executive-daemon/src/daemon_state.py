@@ -29,6 +29,7 @@ class DaemonState(NamedTuple):
     last_git_hashes: dict[str, str]
     observation_counter: int
     pattern_counter: int
+    prediction_counter: int
 
 
 class RuntimeConfig(NamedTuple):
@@ -67,6 +68,7 @@ class StateManager:
                 last_git_hashes={},
                 observation_counter=0,
                 pattern_counter=0,
+                prediction_counter=0,
             )
         with open(self._state_path) as f:
             data = yaml.safe_load(f) or {}
@@ -76,6 +78,7 @@ class StateManager:
             last_git_hashes=data.get("last_git_hashes", {}),
             observation_counter=data.get("observation_counter", 0),
             pattern_counter=data.get("pattern_counter", 0),
+            prediction_counter=data.get("prediction_counter", 0),
         )
 
     def save_state(self, state: DaemonState) -> None:
@@ -86,6 +89,7 @@ class StateManager:
             "last_git_hashes": state.last_git_hashes,
             "observation_counter": state.observation_counter,
             "pattern_counter": state.pattern_counter,
+            "prediction_counter": state.prediction_counter,
         }
         atomic_path = self._state_path.with_suffix(".yaml.tmp")
         with open(atomic_path, "w") as f:

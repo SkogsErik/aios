@@ -27,6 +27,9 @@ import yaml
 from session import SessionStore, make_turn
 from context import assemble_context, build_stores
 from dispatch import dispatch
+from task_store import TaskStore, make_step
+from react import ReactRunner
+from orchestrator import PlanOrchestrator
 
 # ---------------------------------------------------------------------------
 # Path resolution
@@ -57,11 +60,14 @@ class Conductor:
         stores: Optional[dict] = None,
         gateway=None,
         obs_dir: Optional[Path] = None,
+        task_store: Optional[TaskStore] = None,
     ) -> None:
         self._session_store = session_store or SessionStore()
         self._stores = stores if stores is not None else build_stores()
         self._gateway = gateway
         self._obs_dir = obs_dir or _OBS_DIR
+        self._task_store = task_store or TaskStore()
+        self._plan_orchestrator = PlanOrchestrator(gateway=gateway)
         self._obs_id_cache: dict[str, int] = {}
 
     # ------------------------------------------------------------------
@@ -158,6 +164,70 @@ class Conductor:
             "response": result["response"],
             "turn_index": turn_index,
         }
+
+    # ------------------------------------------------------------------
+    # Task execution (ReAct loop + persistence)
+    # ------------------------------------------------------------------
+
+    def run_task(
+        self,
+        goal: str,
+        role: str = "coder",
+        session_id: str | None = None,
+    ) -> dict:
+        wyrd_context = self._build_context()
+        task = self._task_store.create(goal=goal, role=role, session_id=session_id)
+
+        self._task_store.update_status(task["id"], "in_progress")
+
+        runner = ReactRunner(gateway=self._gateway)
+        result = runner.run(goal=goal, role=role, wyrd_context=wyrd_context)
+
+        for step in runner.step_history:
+            step_entry = make_step(
+                action=step.get("action", ""),
+                tool_name=step.get("tool"),
+                tool_params=step.get("params"),
+                observation=step.get("result") or step.get("answer"),
+            )
+            self._task_store.add_step(task["id"], step_entry)
+
+        self._task_store.set_result(task["id"], result.output)
+        final_status = "completed" if result.success else "failed"
+        self._task_store.update_status(task["id"], final_status)
+
+        final_task = self._task_store.get(task["id"])
+        return {
+            "task_id": task["id"],
+            "status": final_status,
+            "result": result.output,
+            "error": result.error,
+            "step_count": len(runner.step_history),
+            "task": final_task,
+        }
+
+    # ------------------------------------------------------------------
+    # Plan orchestration
+    # ------------------------------------------------------------------
+
+    def create_plan(
+        self,
+        goal: str,
+        session_id: str | None = None,
+    ) -> dict:
+        return self._plan_orchestrator.create_plan(
+            goal=goal,
+            session_id=session_id,
+        )
+
+    def get_plan(self, plan_id: str) -> dict | None:
+        return self._plan_orchestrator.get_plan(plan_id)
+
+    def list_plans(self) -> list[dict]:
+        return self._plan_orchestrator.list_plans()
+
+    def execute_plan(self, plan_id: str) -> dict:
+        return self._plan_orchestrator.execute_plan(plan_id, conductor=self)
 
     # ------------------------------------------------------------------
     # Internal

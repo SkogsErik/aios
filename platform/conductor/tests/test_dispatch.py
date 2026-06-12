@@ -45,6 +45,9 @@ class TestKeywordClassify:
     def test_plan_request(self):
         assert _keyword_classify("Help me plan my release") == TOOL_PLAN
 
+    def test_plan_request_for(self):
+        assert _keyword_classify("Plan for my release") == TOOL_PLAN
+
     def test_steps_for(self):
         assert _keyword_classify("What are the steps for deploying this?") == TOOL_PLAN
 
