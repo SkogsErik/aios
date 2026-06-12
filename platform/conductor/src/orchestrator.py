@@ -221,9 +221,11 @@ class PlanOrchestrator:
         self._plan_store.save(plan)
 
         gate = confirmation_gate or self._confirmation_gate
+        accumulated_context = ""
 
         for step in plan["steps"]:
             if step["status"] == "completed":
+                accumulated_context = self._build_prior_results(plan["steps"])
                 continue
 
             if gate is not None:
@@ -247,12 +249,14 @@ class PlanOrchestrator:
                 goal=step["goal"],
                 role=step["role"],
                 session_id=plan.get("session_id"),
+                prior_results=accumulated_context,
             )
 
             if result["status"] == "completed":
                 step["status"] = "completed"
                 step["task_id"] = result["task_id"]
                 step["result"] = result["result"]
+                accumulated_context = self._build_prior_results(plan["steps"])
             else:
                 step["status"] = "failed"
                 step["task_id"] = result["task_id"]
@@ -281,6 +285,15 @@ class PlanOrchestrator:
             "result": plan["result"],
             "step_count": len(plan["steps"]),
         }
+
+    def _build_prior_results(self, steps: list[dict[str, Any]]) -> str:
+        parts = []
+        for s in steps:
+            if s.get("result"):
+                parts.append(
+                    f"=== Step {s['id']}: {s['goal']} ===\n{s['result']}"
+                )
+        return "\n\n".join(parts)
 
     def _accumulate_results(self, steps: list[dict[str, Any]]) -> str:
         parts = []

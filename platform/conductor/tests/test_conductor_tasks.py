@@ -104,9 +104,44 @@ class TestConductorRunTask:
         assert result["status"] == "completed"
 
 
-# ---------------------------------------------------------------------------
-# Smoke tests — full orchestration pipeline
-# ---------------------------------------------------------------------------
+class TestConductorConfirmationGate:
+    def test_confirmation_gate_blocks_plan_execution(self, tmp_path):
+        def gate(step_id: str, goal: str) -> bool:
+            return False
+
+        gw = _MockGateway([
+            '{"steps": [{"goal": "Research", "role": "researcher"}, {"goal": "Build", "role": "coder"}]}',
+            '{"action": "final", "answer": "Done."}',
+        ])
+        conductor = Conductor(
+            session_store=SessionStore(base_dir=tmp_path / "sessions"),
+            gateway=gw,
+            confirmation_gate=gate,
+            stores={},
+            obs_dir=tmp_path / "observations",
+        )
+        plan = conductor.create_plan("Build something")
+        result = conductor.execute_plan(plan["id"])
+        assert result["status"] == "blocked"
+
+    def test_confirmation_gate_allows_execution(self, tmp_path):
+        def gate(step_id: str, goal: str) -> bool:
+            return True
+
+        gw = _MockGateway([
+            '{"steps": [{"goal": "Research", "role": "researcher"}]}',
+            '{"action": "final", "answer": "Done."}',
+        ])
+        conductor = Conductor(
+            session_store=SessionStore(base_dir=tmp_path / "sessions"),
+            gateway=gw,
+            confirmation_gate=gate,
+            stores={},
+            obs_dir=tmp_path / "observations",
+        )
+        plan = conductor.create_plan("Build something")
+        result = conductor.execute_plan(plan["id"])
+        assert result["status"] == "completed"
 
 
 class TestConductorOrchestrationSmoke:

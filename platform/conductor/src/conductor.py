@@ -20,7 +20,7 @@ Defined by: ADR-013 — Conductor Agent Design
 import datetime
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import yaml
 
@@ -61,13 +61,14 @@ class Conductor:
         gateway=None,
         obs_dir: Optional[Path] = None,
         task_store: Optional[TaskStore] = None,
+        confirmation_gate: Optional[Callable[[str, str], bool]] = None,
     ) -> None:
         self._session_store = session_store or SessionStore()
         self._stores = stores if stores is not None else build_stores()
         self._gateway = gateway
         self._obs_dir = obs_dir or _OBS_DIR
         self._task_store = task_store or TaskStore()
-        self._plan_orchestrator = PlanOrchestrator(gateway=gateway)
+        self._plan_orchestrator = PlanOrchestrator(gateway=gateway, confirmation_gate=confirmation_gate)
         self._obs_id_cache: dict[str, int] = {}
 
     # ------------------------------------------------------------------
@@ -174,6 +175,7 @@ class Conductor:
         goal: str,
         role: str = "coder",
         session_id: str | None = None,
+        prior_results: str = "",
     ) -> dict:
         wyrd_context = self._build_context()
         task = self._task_store.create(goal=goal, role=role, session_id=session_id)
@@ -181,7 +183,7 @@ class Conductor:
         self._task_store.update_status(task["id"], "in_progress")
 
         runner = ReactRunner(gateway=self._gateway)
-        result = runner.run(goal=goal, role=role, wyrd_context=wyrd_context)
+        result = runner.run(goal=goal, role=role, wyrd_context=wyrd_context, prior_results=prior_results)
 
         for step in runner.step_history:
             step_entry = make_step(

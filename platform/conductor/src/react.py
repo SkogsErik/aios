@@ -26,6 +26,9 @@ You have access to the following tools:
 Context:
 {wyrd_context}
 
+Prior results from earlier plan steps:
+{prior_results}
+
 You work in a ReAct loop:
 1. Think about the current situation based on the goal and context.
 2. Decide on the next action: use a tool or provide the final answer.
@@ -100,6 +103,7 @@ class ReactRunner:
         goal: str,
         role: str,
         wyrd_context: str = "",
+        prior_results: str = "",
     ) -> ToolResult:
         if self._confirmation_gate is not None:
             ToolExecutor.set_confirmation_gate(self._confirmation_gate)
@@ -114,6 +118,7 @@ class ReactRunner:
                 goal=goal,
                 tool_descriptions=tool_descriptions,
                 wyrd_context=wyrd_context or "(none)",
+                prior_results=prior_results or "(none)",
                 step_history=step_history_str or "(no steps yet)",
                 current_observation=current_obs,
             )

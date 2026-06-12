@@ -32,8 +32,8 @@ class _MockConductor:
         self._index = 0
         self.calls = []
 
-    def run_task(self, goal: str, role: str, session_id: str | None = None):
-        self.calls.append({"goal": goal, "role": role, "session_id": session_id})
+    def run_task(self, goal: str, role: str, session_id: str | None = None, prior_results: str = ""):
+        self.calls.append({"goal": goal, "role": role, "session_id": session_id, "prior_results": prior_results[:80] if prior_results else ""})
         if self._index < len(self._results):
             result = self._results[self._index]
             self._index += 1
@@ -290,6 +290,20 @@ class TestPlanOrchestratorExecutePlan:
         mock = _MockConductor()
         orch.execute_plan(plan["id"], mock)
         assert mock.calls[0]["session_id"] == "SES-001"
+
+    def test_passes_prior_results_between_steps(self, tmp_path):
+        store = PlanStore(base_dir=tmp_path)
+        orch = PlanOrchestrator(plan_store=store)
+        steps = [
+            {"id": "STP-001", "goal": "Research topic", "role": "researcher", "status": "pending", "task_id": None, "result": None, "error": None},
+            {"id": "STP-002", "goal": "Write code", "role": "coder", "status": "pending", "task_id": None, "result": None, "error": None},
+        ]
+        plan = orch.create_plan("Build feature", steps=steps)
+        mock = _MockConductor()
+        orch.execute_plan(plan["id"], mock)
+        assert mock.calls[0]["prior_results"] == ""
+        assert "Research topic" in mock.calls[1]["prior_results"]
+        assert "Done: Research" in mock.calls[1]["prior_results"]
 
     def test_skips_completed_steps(self, tmp_path):
         store = PlanStore(base_dir=tmp_path)

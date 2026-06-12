@@ -1,0 +1,22 @@
+id: PLN-2026-0612-008
+goal: Build something
+session_id: null
+status: blocked
+created: '2026-06-12T06:58:04Z'
+updated: '2026-06-12T06:58:04Z'
+steps:
+- id: STP-001
+  goal: Research
+  role: researcher
+  status: blocked
+  task_id: null
+  result: null
+  error: Operator declined to execute this step
+- id: STP-002
+  goal: Build
+  role: coder
+  status: pending
+  task_id: null
+  result: null
+  error: null
+result: null
