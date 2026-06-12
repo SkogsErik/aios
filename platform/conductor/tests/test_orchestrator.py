@@ -32,8 +32,8 @@ class _MockConductor:
         self._index = 0
         self.calls = []
 
-    def run_task(self, goal: str, role: str, session_id: str | None = None, prior_results: str = ""):
-        self.calls.append({"goal": goal, "role": role, "session_id": session_id, "prior_results": prior_results[:80] if prior_results else ""})
+    def run_task(self, goal: str, role: str, session_id: str | None = None, prior_results: str = "", model: str | None = None):
+        self.calls.append({"goal": goal, "role": role, "session_id": session_id, "prior_results": prior_results[:80] if prior_results else "", "model": model})
         if self._index < len(self._results):
             result = self._results[self._index]
             self._index += 1

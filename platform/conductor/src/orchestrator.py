@@ -20,17 +20,18 @@ _PLN_PATTERN = re.compile(r"^PLN-(\d{4}-\d{4})-(\d+)$")
 DECOMPOSITION_PROMPT = """\
 You are a planning agent. Decompose the following operator goal into a sequence of steps.
 
-Each step must be assigned to one of these agent roles:
-- researcher: gathers information, finds facts, explores code/data/web
-- coder: writes code, runs commands, creates files
-- synthesizer: reads and analyses information to produce structured summaries
+Each step must be assigned to exactly one of these agent roles:
+
+- researcher: can read files and search the web. Use for information gathering, fact-finding, exploring existing code, looking up documentation.
+- coder: can read files, write files, and run shell commands. Use for writing code, creating scripts, running tests, executing commands, building things.
+- synthesizer: can only read files. Use for analysing results, summarising findings, producing structured reports from data gathered by earlier steps.
 
 Rules:
 1. Every step must have exactly one role.
 2. Steps must be ordered — later steps can depend on earlier steps.
-3. Each step's goal must be self-contained and actionable.
+3. Each step's goal must be self-contained and actionable using only the tools available to that role.
 4. Keep goals detailed and specific — not vague.
-5. Produce 1-6 steps maximum.
+5. Produce 1-6 steps maximum. Fewer is better.
 
 Operator goal: {goal}
 
@@ -152,6 +153,7 @@ class PlanOrchestrator:
         plan_store: PlanStore | None = None,
         confirmation_gate: Callable[[str, str], bool] | None = None,
         max_steps: int = 6,
+        model: str | None = None,
     ) -> None:
         if gateway is None:
             from gateway import complete as _complete
@@ -161,6 +163,7 @@ class PlanOrchestrator:
         self._plan_store = plan_store or PlanStore()
         self._confirmation_gate = confirmation_gate
         self._max_steps = max_steps
+        self._model = model
 
     def decompose(self, goal: str) -> list[dict[str, Any]]:
         prompt = DECOMPOSITION_PROMPT.format(goal=goal)
@@ -170,6 +173,7 @@ class PlanOrchestrator:
             max_tokens=2000,
             temperature=0.0,
             context={"purpose": "goal_decomposition"},
+            model=self._model,
         )
         raw = response.content.strip()
 
@@ -250,6 +254,7 @@ class PlanOrchestrator:
                 role=step["role"],
                 session_id=plan.get("session_id"),
                 prior_results=accumulated_context,
+                model=self._model,
             )
 
             if result["status"] == "completed":

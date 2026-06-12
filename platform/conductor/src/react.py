@@ -40,6 +40,9 @@ Previous steps:
 
 {current_observation}
 
+IMPORTANT: Once you have achieved the goal, respond with a final answer immediately.
+Do not call additional tools after the goal is met.
+
 Respond with EXACTLY ONE of the following formats:
 
 To call a tool:
@@ -88,6 +91,7 @@ class ReactRunner:
         gateway=None,
         max_steps: int = _MAX_STEPS,
         confirmation_gate: Callable[[str, str], bool] | None = None,
+        model: str | None = None,
     ) -> None:
         if gateway is None:
             from gateway import complete as _complete
@@ -97,6 +101,7 @@ class ReactRunner:
         self._max_steps = max_steps
         self._step_history: list[dict[str, Any]] = []
         self._confirmation_gate = confirmation_gate
+        self._model = model
 
     def run(
         self,
@@ -129,6 +134,7 @@ class ReactRunner:
                 max_tokens=1000,
                 temperature=0.0,
                 context={"purpose": "react_loop", "role": role, "step": step_num},
+                model=self._model,
             )
             raw = response.content.strip()
             parsed = _parse_react_response(raw)
@@ -143,6 +149,7 @@ class ReactRunner:
                 continue
 
             action = parsed.get("action", "")
+            params = parsed.get("params", {})
 
             if action == "final":
                 answer = parsed.get("answer", "")
@@ -153,10 +160,14 @@ class ReactRunner:
                 })
                 return ToolResult(success=True, output=answer)
 
+            tool_name = ""
             if action == "tool_call":
                 tool_name = parsed.get("tool", "")
+            elif ToolRegistry.get(action) is not None:
+                tool_name = action
                 params = parsed.get("params", {})
 
+            if tool_name:
                 tool_result = ToolExecutor.execute(tool_name, params, role=role)
 
                 self._step_history.append({
